@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  /* This maps our Geist fonts to the Tailwind 'font-sans' utility */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui;
+  --font-mono: var(--font-geist-mono), ui-mono, monospace;
+  
+  /* Adding our Unstra Brand Colors to the theme */
+  --color-unstra-bg: #F8FAFC;
+  --color-unstra-indigo: #4F46E5;
+  --color-unstra-navy: #0F172A;
+}
+
+:root {
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+}
+
+/* Force Light Mode (Recommended for Legal Brand consistency) */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth scrolling for your navbar links */
+html {
+  scroll-behavior: smooth;
+}
