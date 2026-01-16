@@ -4,7 +4,23 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Unstra | AI Contract Review & Red Flag Detection',
-  description: 'Know exactly what you\'re signing. Unstra uses legal-grade AI to find red flags in leases and contracts.',
+  description: "Know exactly what you're signing. Unstra uses legal-grade AI to find red flags in leases and contracts.",
+  metadataBase: new URL('https://unstra.com'), // REQUIRED for images to work correctly
+  openGraph: {
+    title: 'Unstra | AI Contract Review & Red Flag Detection',
+    description: 'Find red flags in your contracts instantly with legal-grade AI.',
+    url: 'https://unstra.com',
+    siteName: 'Unstra',
+    locale: 'en_US',
+    type: 'website',
+    // Remove the 'images' array from here
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Unstra | AI Contract Review',
+    description: 'Find red flags in your contracts instantly.',
+    // Remove the 'images' array from here
+  },
 };
 
 export default async function LandingPage() {
