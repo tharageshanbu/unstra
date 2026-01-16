@@ -20,11 +20,11 @@ export default async function LandingPage() {
           <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200">U</div>
           <span className="text-xl font-[900] tracking-tighter uppercase">Unstra</span>
         </div>
-        <div className="hidden md:flex gap-8 text-sm font-bold text-slate-500">
-          <a href="#features" className="hover:text-indigo-600 transition-colors">Features</a>
-          <a href="#security" className="hover:text-indigo-600 transition-colors">Security</a>
-          <a href="#pricing" className="hover:text-indigo-600 transition-colors">Pricing</a>
-        </div>
+<div className="flex gap-4 md:gap-8 text-[10px] md:text-sm font-bold text-slate-500">
+  <a href="#features" className="hover:text-indigo-600">Features</a>
+  <a href="#security" className="hover:text-indigo-600">Security</a>
+  <a href="#pricing" className="hover:text-indigo-600">Pricing</a>
+</div>
       </nav>
 
       {/* Hero Section */}
