@@ -58,7 +58,7 @@ export default async function LandingPage() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
           </span>
-          Coming Early 2026
+          FOUNDING MEMBER ACCESS
         </div>
 
         <h1 className="text-5xl md:text-8xl font-[900] tracking-tight mb-6 leading-[0.9] text-slate-900">
