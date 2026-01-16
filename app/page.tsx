@@ -21,6 +21,10 @@ export const metadata: Metadata = {
     description: 'Find red flags in your contracts instantly.',
     // Remove the 'images' array from here
   },
+  other: {
+    'article:author': 'Unstra Team',
+    'article:published_time': '2026-01-16T00:00:00Z', 
+  }
 };
 
 export default async function LandingPage() {
