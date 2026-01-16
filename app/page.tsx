@@ -108,17 +108,101 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-white py-16 px-6 border-t border-slate-100">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-sm font-bold text-slate-400">
-          <div>
-            <p>© 2026 Unstra AI. Built for clarity.</p>
-            <p className="text-[10px] mt-1 text-slate-300">DISCLAIMER: UNSTRA PROVIDES AI ANALYSIS, NOT LEGAL ADVICE.</p>
+{/* Security Section */}
+      <section id="security" className="py-24 bg-[#F8FAFC]">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <div className="inline-block p-3 rounded-2xl bg-white shadow-sm border border-slate-200 mb-6">
+            <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
           </div>
-          <div className="flex gap-8">
-            <a href="#" className="hover:text-indigo-600 transition-colors">Twitter</a>
-            <a href="#" className="hover:text-indigo-600 transition-colors">LinkedIn</a>
-            <a href="#" className="hover:text-indigo-600 transition-colors">Privacy</a>
+          <h2 className="text-3xl md:text-4xl font-black mb-6">Your privacy is non-negotiable.</h2>
+          <p className="text-slate-500 text-lg mb-10">
+            We don't sell your data. We don't train our AI on your private contracts. 
+            All documents are encrypted and automatically deleted after analysis.
+          </p>
+          <div className="grid md:grid-cols-3 gap-6 text-left">
+            {[
+              { t: 'Bank-Level Encryption', d: 'AES-256 bit encryption for all files.' },
+              { t: 'Auto-Delete', d: 'Data is wiped instantly after your review.' },
+              { t: 'No AI Training', d: 'Your data stays yours. Period.' }
+            ].map((item) => (
+              <div key={item.t} className="p-6 bg-white rounded-2xl border border-slate-100">
+                <h4 className="font-bold text-slate-900 mb-2">{item.t}</h4>
+                <p className="text-xs text-slate-500 font-medium">{item.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-24 bg-white">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-5xl font-black mb-6">Simple, fair pricing.</h2>
+          <p className="text-slate-500 text-lg mb-12">No subscriptions. Pay only when you need a review.</p>
+          
+          <div className="relative p-8 md:p-12 rounded-[40px] border-4 border-indigo-600 bg-white shadow-2xl shadow-indigo-100 overflow-hidden">
+             <div className="absolute top-0 right-0 bg-indigo-600 text-white px-6 py-2 font-black text-xs uppercase tracking-widest rounded-bl-2xl">
+              Early Bird
+            </div>
+            <h3 className="text-xl font-black mb-2 italic">Beta Access Pass</h3>
+            <div className="flex justify-center items-baseline gap-1 mb-6">
+              <span className="text-5xl font-[900]">$0</span>
+              <span className="text-slate-400 font-bold">/per review</span>
+            </div>
+            <p className="text-slate-600 font-bold mb-8">Free for the first 1,000 waitlist members.</p>
+            <ul className="space-y-4 text-left max-w-xs mx-auto mb-10">
+              {['Unlimited Red-Flag Checks', 'Plain-English Summaries', 'Legal-Grade Analysis'].map((li) => (
+                <li key={li} className="flex items-center gap-3 text-sm font-bold text-slate-700">
+                  <span className="text-indigo-600">✦</span> {li}
+                </li>
+              ))}
+            </ul>
+            <a href="#" className="block w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all">
+              Claim Your Free Spot
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-[#F8FAFC] py-20 px-6 border-t border-slate-200">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-16">
+            <div className="max-w-xs">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">U</div>
+                <span className="text-lg font-[900] tracking-tighter uppercase">Unstra</span>
+              </div>
+              <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                Empowering people to sign with confidence. The future of contract review is clear, fast, and AI-driven.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-16 md:gap-24">
+              <div>
+                <h4 className="font-black uppercase tracking-widest text-[10px] text-slate-400 mb-6">Product</h4>
+                <ul className="space-y-4 text-sm font-bold text-slate-600">
+                  <li><a href="#features" className="hover:text-indigo-600">Features</a></li>
+                  <li><a href="#security" className="hover:text-indigo-600">Security</a></li>
+                  <li><a href="#pricing" className="hover:text-indigo-600">Pricing</a></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-black uppercase tracking-widest text-[10px] text-slate-400 mb-6">Social</h4>
+                <ul className="space-y-4 text-sm font-bold text-slate-600">
+                  <li><a href="#" className="hover:text-indigo-600">Twitter</a></li>
+                  <li><a href="#" className="hover:text-indigo-600">LinkedIn</a></li>
+                  <li><a href="mailto:hello@unstra.com" className="hover:text-indigo-600">Contact</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between gap-4">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">© 2026 UNSTRA AI. ALL RIGHTS RESERVED.</p>
+            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+              DISCLAIMER: UNSTRA PROVIDES AI ANALYSIS, NOT LEGAL ADVICE.
+            </p>
           </div>
         </div>
       </footer>
