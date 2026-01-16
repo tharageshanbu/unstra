@@ -18,8 +18,7 @@ const { error } = await supabase
     { 
       email, 
       source: window.location.search.includes('ref=linkedin') ? 'linkedin' : 'direct',
-      user_agent: navigator.userAgent // This will now fill the user_agent column!
-    }
+user_agent: typeof window !== 'undefined' ? navigator.userAgent : 'Server'    }
   ]);
   
     if (error) {
