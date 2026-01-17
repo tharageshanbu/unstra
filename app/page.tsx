@@ -116,7 +116,7 @@ const seatsRemaining = totalSeats - displayCount;
   <div className="max-w-3xl mx-auto px-6 text-center">
     
     <h2 className="text-4xl md:text-5xl font-[1000] mb-4 tracking-tight text-slate-900 leading-tight">
-      The Founding 100.
+      Claim your spot in the Founding 100
     </h2>
     <p className="text-slate-500 text-lg mb-12 font-medium">
       An exclusive launch offer for those who prioritize clarity.
@@ -175,7 +175,7 @@ const seatsRemaining = totalSeats - displayCount;
 </section>
 
 {/* The Process Section */}
-<section id="how-it-works" className="w-full py-24 bg-white">
+<section id="features" className="w-full py-24 bg-white">
   {/* Added px-6 md:px-8 and max-w-7xl to fix the edge-cutting issue */}
   <div className="max-w-7xl mx-auto px-6 md:px-8">
     <div className="relative">
@@ -251,7 +251,7 @@ const seatsRemaining = totalSeats - displayCount;
 </section>
 
       {/* Product Preview / Feature Deep-Dive */}
-<section id="features" className="max-w-7xl mx-auto px-6 md:px-8 py-24 border-t border-slate-100">
+<section id="product-deep-dive" className="max-w-7xl mx-auto px-6 md:px-8 py-24 border-t border-slate-100">
   <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
     <div className="order-2 lg:order-1 text-left">
       <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-6 text-slate-900 leading-tight">
