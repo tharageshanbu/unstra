@@ -67,7 +67,7 @@ export default async function LandingPage() {
         </h1>
         
         <p className="text-lg md:text-2xl text-slate-500 mb-10 max-w-2xl mx-auto font-medium">
-          AI-powered clarity for leases, employment contracts, and fine print. Find what matters, miss nothing.
+          Unstra uses AI to scan your contracts for hidden red flags. Get a plain-English breakdown of every risk before you sign.
         </p>
         
         <div className="max-w-md mx-auto mb-10">
@@ -91,6 +91,82 @@ export default async function LandingPage() {
           </p>
         </div>
       </main>
+
+{/* The Process Section */}
+<section id="how-it-works" className="w-full py-24 bg-white">
+  {/* Added px-6 md:px-8 and max-w-7xl to fix the edge-cutting issue */}
+  <div className="max-w-7xl mx-auto px-6 md:px-8">
+    <div className="relative">
+      {/* Subtle Background Header */}
+      <div className="text-center mb-16">
+        <h2 className="text-[10px] font-black tracking-[0.3em] text-indigo-600 uppercase mb-4">How it works</h2>
+        <p className="text-3xl md:text-4xl font-[900] text-slate-900 tracking-tight">Three steps to total clarity.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+        {[
+          { 
+            step: "01", 
+            title: "Secure Upload", 
+            desc: "Drop in any legal document. We specialize in leases, employment offers, and SaaS agreements, but our AI can analyze almost any contract.",
+            color: "bg-blue-50 text-blue-600",
+            visual: (
+              <div className="flex flex-col gap-1 w-10 h-12 bg-white border-2 border-blue-100 rounded-lg p-2 mb-4 group-hover:border-blue-400 transition-colors">
+                <div className="w-full h-1 bg-blue-100 rounded" />
+                <div className="w-2/3 h-1 bg-blue-100 rounded" />
+                <div className="w-full h-1 bg-blue-100 rounded" />
+                <div className="mt-auto w-full flex justify-center text-[10px] text-blue-400 font-bold">↑</div>
+              </div>
+            )
+          },
+          { 
+            step: "02", 
+            title: "Deep Analysis", 
+            desc: "Our AI maps your document against 50+ risk categories to find hidden 'gotcha' clauses instantly.",
+            color: "bg-indigo-50 text-indigo-600",
+            visual: (
+              <div className="relative w-12 h-12 mb-4">
+                <div className="absolute inset-0 bg-indigo-100 rounded-full animate-pulse" />
+                <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
+                   <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+              </div>
+            )
+          },
+          { 
+            step: "03", 
+            title: "Actionable Report", 
+            desc: "Receive a categorized list of red flags with plain-English suggestions on what to negotiate.",
+            color: "bg-purple-50 text-purple-600",
+            visual: (
+              <div className="flex flex-col gap-2 w-12 mb-4">
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-400" /><div className="w-8 h-1 bg-slate-100 rounded" /></div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-400" /><div className="w-10 h-1 bg-slate-100 rounded" /></div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-400" /><div className="w-6 h-1 bg-slate-100 rounded" /></div>
+              </div>
+            )
+          }
+        ].map((item, idx) => (
+          <div key={item.step} className="group relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            {item.visual}
+            <h3 className="text-xl font-black text-slate-900 mb-3">{item.title}</h3>
+            <p className="text-slate-500 text-sm font-bold leading-relaxed">{item.desc}</p>
+            <div className={`absolute top-6 right-6 px-3 py-1 rounded-full ${item.color} text-[10px] font-black uppercase tracking-widest`}>
+              Step {item.step}
+            </div>
+            {idx < 2 && (
+              <div className="hidden lg:block absolute top-1/2 -right-4 translate-x-1/2 -translate-y-1/2 z-20">
+                <svg className="w-6 h-6 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Product Preview */}
       <section id="features" className="max-w-6xl mx-auto px-6 md:px-8 py-24 border-t border-slate-100">
@@ -132,17 +208,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Trust Bar */}
-      <section className="bg-white py-16 px-6 border-y border-slate-100 text-center">
-        <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] mb-10">Anticipated Launch Coverage</p>
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-center gap-8 md:gap-16 grayscale opacity-30 font-black text-lg text-slate-400">
-           <span>LEGAL TODAY</span>
-           <span>TECH CRUNCH</span>
-           <span>PRODUCT HUNT</span>
-           <span>FREELANCE INSIDER</span>
-        </div>
-      </section>
-
       {/* Security Section */}
       <section id="security" className="py-24 bg-[#F8FAFC]">
         <div className="max-w-4xl mx-auto px-6 text-center">
@@ -158,7 +223,7 @@ export default async function LandingPage() {
           </p>
           <div className="grid md:grid-cols-3 gap-6 text-left">
             {[
-              { t: 'Bank-Level Encryption', d: 'AES-256 bit encryption for all files.' },
+              { t: 'Enterprise-Grade Security', d: 'Your documents are protected with AES-256 bit encryption at rest and in transit.' },
               { t: 'Auto-Delete', d: 'Data is wiped instantly after your review.' },
               { t: 'No AI Training', d: 'Your data stays yours. Period.' }
             ].map((item) => (
