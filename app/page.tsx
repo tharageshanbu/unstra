@@ -111,6 +111,69 @@ const seatsRemaining = totalSeats - displayCount;
   </div>
 </main>
 
+{/* Cohesive Premium Section */}
+<section id="pricing" className="py-24 bg-[#F8FAFC]"> {/* Soft off-white background */}
+  <div className="max-w-3xl mx-auto px-6 text-center">
+    
+    <h2 className="text-4xl md:text-5xl font-[1000] mb-4 tracking-tight text-slate-900 leading-tight">
+      The Founding 100.
+    </h2>
+    <p className="text-slate-500 text-lg mb-12 font-medium">
+      An exclusive launch offer for those who prioritize clarity.
+    </p>
+    
+    {/* The Card - Uses a subtle 'Glass' effect but on a light theme */}
+    <div className="relative p-1 rounded-[42px] bg-white border border-slate-200 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)]">
+      <div className="bg-white rounded-[40px] p-10 md:p-16">
+        
+        <div className="inline-block bg-indigo-50 text-indigo-600 px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-8">
+          Complimentary Access
+        </div>
+
+        <div className="flex justify-center items-baseline gap-3 mb-10">
+          <span className="text-8xl font-[1000] tracking-tighter text-[#0F172A]">$0</span>
+          <div className="text-left">
+            <span className="block text-slate-300 font-bold line-through text-2xl decoration-indigo-500/30 decoration-4 leading-none">$60</span>
+            <span className="text-indigo-600 font-black text-[10px] uppercase tracking-widest leading-none">Pro Value</span>
+          </div>
+        </div>
+
+        <div className="grid gap-4 mb-12 text-left max-w-sm mx-auto">
+          {[
+            '10 High-Precision Analysis Credits', 
+            'Deep-Reasoning Risk Detection',
+            'Founding Member Status',
+            'Exclusive Early-Bird Rates'
+          ].map((feature) => (
+            <div key={feature} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50/50 border border-slate-100">
+              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <span className="text-sm font-bold text-slate-700">{feature}</span>
+            </div>
+          ))}
+        </div>
+
+{/* We changed <button> to <a> and added href="#waitlist-top" 
+    Make sure your Hero section/Input has the id="waitlist-top"
+*/}
+<a 
+  href="#" 
+  className="block w-full py-6 bg-[#0F172A] text-white rounded-2xl font-black text-lg text-center hover:bg-indigo-600 transition-all duration-300 shadow-xl hover:shadow-indigo-200"
+>
+  Claim My Founding Pass
+</a>
+        
+        <p className="mt-8 text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+          Limited Availability • No Credit Card Required
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
 {/* The Process Section */}
 <section id="how-it-works" className="w-full py-24 bg-white">
   {/* Added px-6 md:px-8 and max-w-7xl to fix the edge-cutting issue */}
@@ -288,63 +351,6 @@ const seatsRemaining = totalSeats - displayCount;
           <p className="text-xs text-slate-500 font-bold leading-relaxed">{item.d}</p>
         </div>
       ))}
-    </div>
-  </div>
-</section>
-
-{/* Cohesive Premium Section */}
-<section id="pricing" className="py-24 bg-[#F8FAFC]"> {/* Soft off-white background */}
-  <div className="max-w-3xl mx-auto px-6 text-center">
-    
-    <h2 className="text-4xl md:text-5xl font-[1000] mb-4 tracking-tight text-slate-900 leading-tight">
-      The Founding 100.
-    </h2>
-    <p className="text-slate-500 text-lg mb-12 font-medium">
-      An exclusive launch offer for those who prioritize clarity.
-    </p>
-    
-    {/* The Card - Uses a subtle 'Glass' effect but on a light theme */}
-    <div className="relative p-1 rounded-[42px] bg-white border border-slate-200 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)]">
-      <div className="bg-white rounded-[40px] p-10 md:p-16">
-        
-        <div className="inline-block bg-indigo-50 text-indigo-600 px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-8">
-          Complimentary Access
-        </div>
-
-        <div className="flex justify-center items-baseline gap-3 mb-10">
-          <span className="text-8xl font-[1000] tracking-tighter text-[#0F172A]">$0</span>
-          <div className="text-left">
-            <span className="block text-slate-300 font-bold line-through text-2xl decoration-indigo-500/30 decoration-4 leading-none">$60</span>
-            <span className="text-indigo-600 font-black text-[10px] uppercase tracking-widest leading-none">Pro Value</span>
-          </div>
-        </div>
-
-        <div className="grid gap-4 mb-12 text-left max-w-sm mx-auto">
-          {[
-            '10 High-Precision Analysis Credits', 
-            'Deep-Reasoning Risk Detection',
-            'Founding Member Status',
-            'Exclusive Early-Bird Rates'
-          ].map((feature) => (
-            <div key={feature} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50/50 border border-slate-100">
-              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <span className="text-sm font-bold text-slate-700">{feature}</span>
-            </div>
-          ))}
-        </div>
-
-        <button className="w-full py-6 bg-[#0F172A] text-white rounded-2xl font-black text-lg hover:bg-indigo-600 transition-all duration-300 shadow-xl hover:shadow-indigo-200">
-          Claim My Founding Pass
-        </button>
-        
-        <p className="mt-8 text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-          Limited Availability • No Credit Card Required
-        </p>
-      </div>
     </div>
   </div>
 </section>
