@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import WaitlistForm from '@/components/WaitlistForm';
 import { Metadata } from 'next';
 
+export const revalidate = 0;
 export const metadata: Metadata = {
   title: 'Unstra | AI Contract Review & Red Flag Detection',
   description: "Know exactly what you're signing. Unstra uses legal-grade AI to find red flags in leases and contracts.",
@@ -28,19 +29,28 @@ export const metadata: Metadata = {
 };
 
 export default async function LandingPage() {
-  const supabase = await createClient();
-  const { count } = await supabase.from('waitlist').select('*', { count: 'exact', head: true });
-  
-  // LOGIC: Start the bar at 88% and slowly creep to 100% as real people join.
-  // This ensures it never looks "empty" on day one.
-const dbCount = 0; // This connects to your actual database email count
+
+const supabase = await createClient();
+
+// 1. Fetch the actual count from the DB
+const { count, error } = await supabase
+  .from('waitlist')
+  .select('*', { count: 'exact', head: true });
+
+// 2. Assign the real DB count (fallback to 0 if null or error)
+const dbCount = count ?? 0; 
+
+// 3. Your logic for the Founding 100 progress
 const startingOffset = 34;
 const totalSeats = 100;
 
-// This logic ensures it starts at 34, grows with signups, but stops at 99
+// Logic: Starts at 34, grows with signups, caps at 99 to keep it 'nearly full'
 const displayCount = Math.min(startingOffset + dbCount, 99);
 const progressPercent = (displayCount / totalSeats) * 100;
 const seatsRemaining = totalSeats - displayCount;
+
+if (error) console.error("Counter Sync Error:", error.message);
+
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] selection:bg-indigo-100 overflow-x-hidden">
