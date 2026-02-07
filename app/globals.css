@@ -1,31 +1,42 @@
 @import "tailwindcss";
 
 @theme {
-  /* This maps our Geist fonts to the Tailwind 'font-sans' utility */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui;
   --font-mono: var(--font-geist-mono), ui-mono, monospace;
   
-  /* Adding our Unstra Brand Colors to the theme */
-  --color-unstra-bg: #F8FAFC;
-  --color-unstra-indigo: #4F46E5;
-  --color-unstra-navy: #0F172A;
+  /* Premium Dark Theme Palette */
+  --color-unstra-bg: #050505;
+  --color-unstra-card: #0A0A0A;
+  --color-unstra-blue: #007AFF;
+  --color-unstra-border: rgba(255, 255, 255, 0.08);
 }
 
 :root {
-  --background: #F8FAFC;
-  --foreground: #0F172A;
+  --background: #050505;
+  --foreground: #FFFFFF;
 }
 
-/* Force Light Mode (Recommended for Legal Brand consistency) */
+/* Updated for Dark Mode Authority */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Smooth scrolling for your navbar links */
-html {
-  scroll-behavior: smooth;
+/* Glassmorphism Utility */
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-unstra-border);
+}
+
+.premium-gradient {
+  background: radial-gradient(circle at center, #111 0%, #000 100%);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }

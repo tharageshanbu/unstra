@@ -1,421 +1,236 @@
-import { createClient } from '@/lib/supabase/server';
-import WaitlistForm from '@/components/WaitlistForm';
-import { Metadata } from 'next';
+"use client";
 
-export const revalidate = 0;
-export const metadata: Metadata = {
-  title: 'Unstra | AI Contract Review & Red Flag Detection',
-  description: "Know exactly what you're signing. Unstra uses legal-grade AI to find red flags in leases and contracts.",
-  metadataBase: new URL('https://unstra.com'), // REQUIRED for images to work correctly
-  openGraph: {
-    title: 'Unstra | AI Contract Review & Red Flag Detection',
-    description: 'Find red flags in your contracts instantly with legal-grade AI.',
-    url: 'https://unstra.com',
-    siteName: 'Unstra',
-    locale: 'en_US',
-    type: 'website',
-    // Remove the 'images' array from here
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Unstra | AI Contract Review',
-    description: 'Find red flags in your contracts instantly.',
-    // Remove the 'images' array from here
-  },
-  other: {
-    'article:author': 'Unstra Team',
-    'article:published_time': '2026-01-16T00:00:00Z', 
-  }
-};
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Shield, Zap, Activity, Check, Lock, Play, Eye, 
+  Terminal, ArrowRight, ShieldCheck, FileText, Globe, Menu, X 
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
-export default async function LandingPage() {
+export default function LandingPage() {
+  const router = useRouter();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-const supabase = await createClient();
+  // FIXED: Manual scroll handler to fix mobile navigation
+  const scrollToSection = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    setIsMenuOpen(false); // Close menu immediately
 
-// 1. Fetch the actual count from the DB
-const { count, error } = await supabase
-  .from('waitlist')
-  .select('*', { count: 'exact', head: true });
+    setTimeout(() => {
+      const element = document.getElementById(id);
+      if (element) {
+        const offset = 80; // Height of your fixed h-20 nav
+        const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+        const offsetPosition = elementPosition - offset;
 
-// 2. Assign the real DB count (fallback to 0 if null or error)
-const dbCount = count ?? 0; 
-
-// 3. Your logic for the Founding 100 progress
-const startingOffset = 34;
-const totalSeats = 100;
-
-// Logic: Starts at 34, grows with signups, caps at 99 to keep it 'nearly full'
-const displayCount = Math.min(startingOffset + dbCount, 99);
-const progressPercent = (displayCount / totalSeats) * 100;
-const seatsRemaining = totalSeats - displayCount;
-
-if (error) console.error("Counter Sync Error:", error.message);
-
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    }, 200); // Small delay to allow menu to exit
+  };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] selection:bg-indigo-100 overflow-x-hidden">
-      {/* Navigation */}
-      <nav className="flex justify-between items-center px-6 md:px-8 py-6 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200">U</div>
-          <span className="text-xl font-[900] tracking-tighter uppercase">Unstra</span>
+    <div className="min-h-screen bg-[#020202] text-white selection:bg-blue-500/30 overflow-x-hidden font-sans">
+      <div className="fixed inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] z-0" />
+
+      {/* 1. ADAPTIVE STATUS BAR NAV */}
+      <nav className="fixed w-full z-50 border-b border-white/5 bg-black/80 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 h-20 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+              <Shield size={20} className="text-white" />
+            </div>
+            <span className="text-xl font-[900] tracking-tighter italic uppercase">Unstra</span>
+          </div>
+
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-10">
+            <a href="#process" onClick={(e) => scrollToSection(e, 'process')} className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-500 hover:text-white transition-all">Process</a>
+            <a href="#security" onClick={(e) => scrollToSection(e, 'security')} className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-500 hover:text-white transition-all">Security</a>
+            {false&& (<a href="/pricing" className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-500 hover:text-white transition-all">Pricing</a>)}
+            <button 
+              onClick={() => router.push('/login')}
+              className="bg-white text-black px-8 py-3 rounded-full font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-xl"
+            >
+              Enter Vault
+            </button>
+          </div>
+
+          {/* Mobile Menu Toggle */}
+          <button className="md:hidden text-white z-50" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
-        <div className="flex gap-4 md:gap-8 text-[10px] md:text-sm font-bold text-slate-500">
-          <a href="#features" className="hover:text-indigo-600 transition-colors">Features</a>
-          <a href="#security" className="hover:text-indigo-600 transition-colors">Security</a>
-          <a href="#pricing" className="hover:text-indigo-600 transition-colors">Pricing</a>
-        </div>
+
+        {/* Mobile Dropdown Fix */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className="md:hidden fixed top-20 left-0 w-full bg-black border-b border-white/10 px-6 py-10 flex flex-col gap-8 z-40 shadow-2xl"
+            >
+              <button onClick={(e) => scrollToSection(e, 'process')} className="text-left text-xs font-black uppercase tracking-[0.4em] text-zinc-400">Process</button>
+              <button onClick={(e) => scrollToSection(e, 'security')} className="text-left text-xs font-black uppercase tracking-[0.4em] text-zinc-400">Security</button>
+              {false && (<button onClick={() => { setIsMenuOpen(false); router.push('/pricing'); }} className="text-left text-xs font-black uppercase tracking-[0.4em] text-zinc-400">Pricing</button>)}
+              <button 
+                onClick={() => { setIsMenuOpen(false); router.push('/login'); }}
+                className="w-full bg-white text-black py-4 rounded-full font-black text-xs uppercase tracking-[0.3em]"
+              >
+                Enter Vault
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
-      {/* Hero Section */}
-<main className="max-w-7xl mx-auto px-6 md:px-8 pt-6 md:pt-12 pb-20 text-center">  {/* Founding Badge */}
-  <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-8 text-[10px] font-bold tracking-[0.2em] text-indigo-600 uppercase bg-indigo-50 rounded-full border border-indigo-100">
-    <span className="relative flex h-2 w-2">
-      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-      <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
-    </span>
-    FOUNDING MEMBER ACCESS
-  </div>
+      {/* 2. HERO: THREE-LINE ARCHITECTURE */}
+      <section className="relative pt-48 pb-24 px-6 max-w-7xl mx-auto text-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className="inline-flex items-center gap-3 mb-12 bg-blue-600/5 border border-blue-600/20 px-6 py-2 rounded-full shadow-[0_0_40px_rgba(37,99,235,0.15)]"
+        >
+          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+          <span className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-400 italic text-nowrap">Expert Eye Protocol Engaged</span>
+        </motion.div>
 
-  {/* Main Headline */}
-  <h1 className="text-5xl md:text-8xl font-[900] tracking-tight mb-6 leading-[0.9] text-slate-900">
-    Know exactly <br />
-    <span className="text-indigo-600 italic">what you're signing.</span>
-  </h1>
-  
-  {/* Sub-headline */}
-  <p className="text-lg md:text-2xl text-slate-500 mb-10 max-w-2xl mx-auto font-medium">
-    Unstra uses AI to scan your contracts for hidden red flags. Get a plain-English breakdown of every risk before you sign.
-  </p>
-  
-  {/* Waitlist Input Box */}
-  <div className="max-w-md mx-auto mb-10">
-    <WaitlistForm />
-  </div>
-  
-  {/* The 99-Cap Milestone Bar */}
-  <div className="max-w-xs mx-auto">
-    <div className="flex justify-between items-end mb-2">
-      <div className="flex items-center gap-1.5">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-        </span>
-        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Founding Cohort</span>
-      </div>
-      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.15em]">
-        {displayCount}/{totalSeats} Joined
-      </span>
-    </div>
-    
-    <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-      <div 
-        className="h-full bg-indigo-600 transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(79,70,229,0.3)]" 
-        style={{ width: `${progressPercent}%` }} 
-      />
-    </div>
-    
-    <p className="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">
-      {seatsRemaining} {seatsRemaining === 1 ? 'Seat' : 'Seats'} Remaining
-    </p>
-  </div>
-</main>
+        <h1 className="text-5xl md:text-[100px] font-black uppercase tracking-tighter italic leading-[0.8] mb-12 drop-shadow-2xl">
+          Sign every contract <br />
+          <span className="text-zinc-500">With total</span> <br />
+          <span className="text-blue-600">Confidence.</span>
+        </h1>
 
-{/* Cohesive Premium Section */}
-<section id="pricing" className="py-24 bg-[#F8FAFC]"> {/* Soft off-white background */}
-  <div className="max-w-3xl mx-auto px-6 text-center">
-    
-    <h2 className="text-4xl md:text-5xl font-[1000] mb-4 tracking-tight text-slate-900 leading-tight">
-      Claim your spot in the Founding 100
-    </h2>
-    <p className="text-slate-500 text-lg mb-12 font-medium">
-      An exclusive launch offer for those who prioritize clarity.
-    </p>
-    
-    {/* The Card - Uses a subtle 'Glass' effect but on a light theme */}
-    <div className="relative p-1 rounded-[42px] bg-white border border-slate-200 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)]">
-      <div className="bg-white rounded-[40px] p-10 md:p-16">
-        
-        <div className="inline-block bg-indigo-50 text-indigo-600 px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-8">
-          Complimentary Access
-        </div>
-
-        <div className="flex justify-center items-baseline gap-3 mb-10">
-          <span className="text-8xl font-[1000] tracking-tighter text-[#0F172A]">$0</span>
-          <div className="text-left">
-            <span className="block text-slate-300 font-bold line-through text-2xl decoration-indigo-500/30 decoration-4 leading-none">$60</span>
-            <span className="text-indigo-600 font-black text-[10px] uppercase tracking-widest leading-none">Pro Value</span>
-          </div>
-        </div>
-
-        <div className="grid gap-4 mb-12 text-left max-w-sm mx-auto">
-          {[
-            '10 High-Precision Analysis Credits', 
-            'Deep-Reasoning Risk Detection',
-            'Founding Member Status',
-            'Exclusive Early-Bird Rates'
-          ].map((feature) => (
-            <div key={feature} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50/50 border border-slate-100">
-              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <span className="text-sm font-bold text-slate-700">{feature}</span>
-            </div>
-          ))}
-        </div>
-
-{/* We changed <button> to <a> and added href="#waitlist-top" 
-    Make sure your Hero section/Input has the id="waitlist-top"
-*/}
-<a 
-  href="#" 
-  className="block w-full py-6 bg-[#0F172A] text-white rounded-2xl font-black text-lg text-center hover:bg-indigo-600 transition-all duration-300 shadow-xl hover:shadow-indigo-200"
->
-  Claim My Founding Pass
-</a>
-        
-        <p className="mt-8 text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-          Limited Availability • No Credit Card Required
+        <p className="text-zinc-500 max-w-[850px] mx-auto text-lg md:text-xl font-bold italic leading-relaxed mb-16 px-4">
+          Unstra scans the fine print for you. We find the red flags, explain the risks in plain <br className="hidden md:block" /> 
+          English, and make sure you never get stuck in a bad deal.
         </p>
-      </div>
-    </div>
-  </div>
-</section>
 
-{/* The Process Section */}
-<section id="features" className="w-full py-24 bg-white">
-  {/* Added px-6 md:px-8 and max-w-7xl to fix the edge-cutting issue */}
-  <div className="max-w-7xl mx-auto px-6 md:px-8">
-    <div className="relative">
-      {/* Subtle Background Header */}
-      <div className="text-center mb-16">
-        <h2 className="text-[10px] font-black tracking-[0.3em] text-indigo-600 uppercase mb-4">How it works</h2>
-        <p className="text-3xl md:text-4xl font-[900] text-slate-900 tracking-tight">Three steps to total clarity.</p>
-      </div>
+        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+          <button onClick={() => router.push('/login')} className="w-full sm:w-auto bg-blue-600 text-white px-14 py-5 rounded-[24px] font-black text-xs uppercase tracking-[0.3em] shadow-[0_0_40px_rgba(37,99,235,0.4)] hover:scale-105 transition-all">
+            Access My Vault
+          </button>
+          <button onClick={() => router.push('/demo')} className="w-full sm:w-auto bg-zinc-900 border border-white/10 text-white px-14 py-5 rounded-[24px] font-black text-xs uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all">
+            See Sample Audit
+          </button>
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
-        {[
-          { 
-            step: "01", 
-            title: "Secure Upload", 
-            desc: "Securely upload any agreement. From complex insurance policies and leases to SaaS and employment offers, our AI maps risks across all legal documentation.",
-            color: "bg-blue-50 text-blue-600",
-            visual: (
-              <div className="flex flex-col gap-1 w-10 h-12 bg-white border-2 border-blue-100 rounded-lg p-2 mb-4 group-hover:border-blue-400 transition-colors">
-                <div className="w-full h-1 bg-blue-100 rounded" />
-                <div className="w-2/3 h-1 bg-blue-100 rounded" />
-                <div className="w-full h-1 bg-blue-100 rounded" />
-                <div className="mt-auto w-full flex justify-center text-[10px] text-blue-400 font-bold">↑</div>
-              </div>
-            )
-          },
-          { 
-            step: "02", 
-            title: "Deep Analysis", 
-            desc: "Our AI maps your document against 50+ risk categories to find hidden 'gotcha' clauses instantly.",
-            color: "bg-indigo-50 text-indigo-600",
-            visual: (
-              <div className="relative w-12 h-12 mb-4">
-                <div className="absolute inset-0 bg-indigo-100 rounded-full animate-pulse" />
-                <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
-                   <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      {/* 3. REFINED PROCESS SECTION */}
+      <section id="process" className="py-32 px-6 md:px-10 max-w-7xl mx-auto border-t border-white/5">
+        <div className="grid lg:grid-cols-2 gap-20 items-center">
+          <div className="text-left">
+            <h2 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.6em] mb-8 italic underline underline-offset-8 decoration-blue-500/30">Forensic Pipeline</h2>
+            <p className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic mb-12 leading-[0.9]">
+              From Upload <br /> <span className="text-zinc-800 tracking-normal text-italic">To Total Clarity.</span>
+            </p>
+            
+            <div className="space-y-12">
+              {[
+                { t: "SECURE DROP", d: "Drag and drop any PDF. Documents are isolated in your personal vault immediately via 256-bit AES encryption.", icon: ShieldCheck, color: "text-blue-500" },
+                { t: "JURISDICTION MAPPING", d: "Our engine automatically identifies the Governing Law and maps risks specific to your region.", icon: Globe, color: "text-emerald-500" },
+                { t: "EXPERT EYE SENSING", d: "Audit agreements against 50 high-stakes risk categories to find hidden red flags instantly.", icon: Eye, color: "text-amber-500" },
+                { t: "PLAIN ENGLISH VERDICT", d: "Get a clear Risk Score (1-10) and specific scripts on exactly what to negotiate.", icon: FileText, color: "text-rose-500" }
+              ].map((item, i) => (
+                <div key={i} className="flex gap-6 items-start group">
+                  <div className={`flex-shrink-0 w-14 h-14 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center ${item.color} shadow-[0_0_20px_rgba(0,0,0,0.5)] group-hover:border-current transition-all duration-500`}>
+                    <item.icon size={24} />
+                  </div>
+                  <div>
+                    <h4 className="text-[11px] font-black uppercase tracking-[0.3em] mb-2 text-white">{item.t}</h4>
+                    <p className="text-sm text-zinc-500 font-bold italic leading-relaxed tracking-tight max-w-md">{item.d}</p>
+                  </div>
                 </div>
-              </div>
-            )
-          },
-          { 
-            step: "03", 
-            title: "Actionable Report", 
-            desc: "Receive a categorized list of red flags with plain-English suggestions on what to negotiate.",
-            color: "bg-purple-50 text-purple-600",
-            visual: (
-              <div className="flex flex-col gap-2 w-12 mb-4">
-                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-400" /><div className="w-8 h-1 bg-slate-100 rounded" /></div>
-                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-400" /><div className="w-10 h-1 bg-slate-100 rounded" /></div>
-                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-400" /><div className="w-6 h-1 bg-slate-100 rounded" /></div>
-              </div>
-            )
-          }
-        ].map((item, idx) => (
-          <div key={item.step} className="group relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-            {item.visual}
-            <h3 className="text-xl font-black text-slate-900 mb-3">{item.title}</h3>
-            <p className="text-slate-500 text-sm font-bold leading-relaxed">{item.desc}</p>
-            <div className={`absolute top-6 right-6 px-3 py-1 rounded-full ${item.color} text-[10px] font-black uppercase tracking-widest`}>
-              Step {item.step}
+              ))}
             </div>
-            {idx < 2 && (
-              <div className="hidden lg:block absolute top-1/2 -right-4 translate-x-1/2 -translate-y-1/2 z-20">
-                <svg className="w-6 h-6 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            )}
           </div>
-        ))}
-      </div>
-    </div>
-  </div>
-</section>
-
-      {/* Product Preview / Feature Deep-Dive */}
-<section id="product-deep-dive" className="max-w-7xl mx-auto px-6 md:px-8 py-24 border-t border-slate-100">
-  <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-    <div className="order-2 lg:order-1 text-left">
-      <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-6 text-slate-900 leading-tight">
-        Don't just read it. <span className="text-indigo-600">Understand it.</span>
-      </h2>
-      <p className="text-slate-500 text-lg mb-8 leading-relaxed font-medium">
-        Unstra acts as a specialized layer between you and the fine print. 
-        We identify high-impact clauses that dictate your costs and your rights—turning 30 pages of jargon into a 2-minute summary.
-      </p>
-<ul className="space-y-4">
-  {[
-    'Financial Red Flag Detection', 
-    'Liability & Coverage Analysis', 
-    'Unfair Termination & Trap Clauses'
-  ].map((item) => (
-    <li key={item} className="flex items-center gap-3 font-bold text-slate-700">
-      <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm">✓</div>
-      {item}
-    </li>
-  ))}
-</ul>
-    </div>
-
-    <div className="relative order-1 lg:order-2">
-      {/* Background Document Mockup */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-8 opacity-30 blur-[1px] select-none">
-        <div className="h-4 w-1/3 bg-slate-200 rounded mb-4" />
-        {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-2 w-full bg-slate-100 rounded mb-3" />)}
-      </div>
-
-      {/* The "Aha!" Risk Card - RENTAL/LEASE EXAMPLE */}
-      <div className="relative lg:absolute lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 mt-[-80px] lg:mt-0 w-full max-w-[380px] mx-auto bg-white rounded-3xl shadow-[0_20px_50px_rgba(79,70,229,0.15)] border-2 border-indigo-50 p-6 z-20 transition-transform hover:scale-[1.02] duration-300">
-        <div className="flex items-center gap-3 mb-4 text-rose-600">
-          <div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-rose-200">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+          
+          <div className="relative group rounded-[40px] overflow-hidden border border-white/10 bg-zinc-900 shadow-2xl transition-transform hover:scale-[1.01] duration-700">
+            <video autoPlay loop muted playsInline className="w-full aspect-video object-cover opacity-60 group-hover:opacity-100 transition-opacity">
+              <source src="/demo.mp4" type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute bottom-8 left-8 flex items-center gap-3">
+              <Activity size={16} className="text-blue-500 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] italic text-zinc-400">Live Forensic Stream</span>
+            </div>
           </div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em]">Maintenance Trap</p>
         </div>
-        
-        <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100 mb-3 text-left">
-          <p className="text-xs font-bold text-rose-900 leading-tight italic">
-            "Tenant shall be responsible for all repairs and replacements of major appliances, including HVAC and plumbing, regardless of cause."
+      </section>
+
+      {/* 4. SECURITY: YOUR DATA ISOLATED */}
+      <section id="security" className="py-32 bg-[#050505] border-y border-white/5 relative overflow-hidden text-center">
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <ShieldCheck size={56} className="mx-auto mb-10 text-blue-600 drop-shadow-[0_0_20px_rgba(37,99,235,0.4)]" />
+          <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter italic mb-10">
+            Your Data, <span className="text-blue-600 italic">Isolated.</span>
+          </h2>
+          <p className="text-zinc-500 text-xl font-bold italic leading-relaxed mb-20 max-w-3xl mx-auto">
+            We handle your documents with total transparency. No hidden data harvesting, no training, and no long-term storage.
           </p>
-        </div>
 
-        <div className="p-4 bg-[#0F172A] rounded-2xl shadow-xl text-left border border-slate-800">
-          <p className="text-[10px] font-black text-indigo-400 uppercase mb-1 tracking-widest">Unstra Analysis</p>
-          <p className="text-xs font-bold text-white leading-relaxed">
-            This is a "High-Cost Liability" clause. We suggest requesting that repairs for <span className="text-indigo-300 underline underline-offset-4">wear and tear</span> remain the Landlord's responsibility to protect your bank account.
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-{/* Security Section */}
-<section id="security" className="py-24 bg-[#F8FAFC]">
-  <div className="max-w-5xl mx-auto px-6 text-center">
-    <div className="inline-block p-4 rounded-3xl bg-white shadow-sm border border-slate-100 mb-8">
-      <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-      </svg>
-    </div>
-    
-    <h2 className="text-3xl md:text-4xl font-[900] mb-6 tracking-tight text-slate-900">
-      Privacy by design.
-    </h2>
-    
-    <p className="text-slate-500 text-lg mb-12 max-w-2xl mx-auto font-medium leading-relaxed">
-      We handle your documents with total transparency. No hidden data harvesting, no training, and no long-term storage.
-    </p>
-
-    <div className="grid md:grid-cols-3 gap-6 text-left">
-      {[
-        { 
-          t: 'Standard Encryption', 
-          d: 'Your data is encrypted using industry-standard protocols while moving between your browser and our servers.',
-          icon: '🔒'
-        },
-        { 
-          t: 'Immediate Deletion', 
-          d: 'We don’t keep your files. Documents are deleted from our temporary storage immediately after the analysis is complete.',
-          icon: '🧹'
-        },
-        { 
-          t: 'No AI Training', 
-          d: 'Your private documents are never used to train or improve our AI models. Your data stays yours.',
-          icon: '🛡️'
-        }
-      ].map((item) => (
-        <div key={item.t} className="p-8 bg-white rounded-3xl border border-slate-200/60 shadow-sm">
-          <div className="text-xl mb-4">{item.icon}</div>
-          <h4 className="font-bold text-slate-900 mb-2 tracking-tight">{item.t}</h4>
-          <p className="text-xs text-slate-500 font-bold leading-relaxed">{item.d}</p>
-        </div>
-      ))}
-    </div>
-  </div>
-</section>
-
-      {/* Footer */}
-      <footer className="bg-white pt-24 pb-12 px-6 border-t border-slate-100">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-12 mb-20">
-            <div className="col-span-2 lg:col-span-5 pr-8 text-left">
-              <div className="flex items-center gap-2.5 mb-6">
-                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-100">U</div>
-                <span className="text-xl font-[1000] tracking-tighter uppercase text-[#0F172A]">Unstra</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {[
+              { t: "NO MODEL TRAINING", d: "Privacy Protocol", desc: "Your private contracts stay private. We never use your data to train or improve global AI models.", icon: Shield },
+              { t: "SESSION PURGING", d: "Clean Slate Policy", desc: "Once your report is finalized, document logs are scrubbed from our active sensing memory immediately.", icon: Zap },
+              { t: "CRYPTOGRAPHIC VAULT", d: "Military-Grade AES", desc: "Agreements are protected at rest with industry-standard 256-bit AES encryption protocols.", icon: Lock }
+            ].map((item, i) => (
+              <div key={i} className="p-12 bg-black/50 backdrop-blur-sm rounded-[48px] border border-white/5 hover:border-blue-500/30 transition-all group text-left">
+                <item.icon size={24} className="text-blue-500 mb-6 group-hover:scale-110 transition-transform" />
+                <h4 className="text-2xl font-black text-white italic mb-1 group-hover:text-blue-500 transition-colors uppercase tracking-tighter">{item.t}</h4>
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-6 italic">{item.d}</p>
+                <p className="text-sm text-zinc-400 font-bold italic leading-relaxed italic tracking-tight">{item.desc}</p>
               </div>
-              <p className="text-slate-500 text-sm font-medium leading-relaxed mb-6 max-w-sm">
-                Empowering people to sign with total confidence. 
-                The future of contract review is driven by high-fidelity AI.
-              </p>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">Systems Operational</span>
-              </div>
-            </div>
-            <div className="col-span-1 lg:col-span-2 text-left">
-              <h4 className="font-black uppercase tracking-[0.2em] text-[10px] text-[#0F172A] mb-8">Product</h4>
-              <ul className="space-y-4 text-sm font-bold text-slate-500">
-                <li><a href="#features" className="hover:text-indigo-600">Features</a></li>
-                <li><a href="#security" className="hover:text-indigo-600">Security</a></li>
-                <li><a href="#pricing" className="hover:text-indigo-600">Pricing</a></li>
-              </ul>
-            </div>
-            <div className="col-span-1 lg:col-span-2 text-left">
-              <h4 className="font-black uppercase tracking-[0.2em] text-[10px] text-[#0F172A] mb-8">Connect</h4>
-              <ul className="space-y-4 text-sm font-bold text-slate-500">
-                <li><a href="#" className="hover:text-indigo-600">LinkedIn</a></li>
-                <li><a href="#" className="hover:text-indigo-600">Twitter (X)</a></li>
-                <li><a href="mailto:hello@unstra.com" className="hover:text-indigo-600">Email</a></li>
-              </ul>
-            </div>
-            <div className="col-span-2 lg:col-span-3 text-left">
-              <h4 className="font-black uppercase tracking-[0.2em] text-[10px] text-[#0F172A] mb-8">Legal</h4>
-              <ul className="space-y-4 text-sm font-bold text-slate-500">
-                <li><a href="#" className="hover:text-indigo-600">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-indigo-600">Terms of Service</a></li>
-              </ul>
-            </div>
+            ))}
           </div>
-          <div className="pt-12 border-t border-slate-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
-            <p className="text-[10px] font-black text-[#0F172A] uppercase tracking-[0.2em]">© 2026 UNSTRA AI. ALL RIGHTS RESERVED.</p>
-            <p className="text-[9px] font-bold text-slate-400 leading-relaxed uppercase tracking-widest italic max-w-xl lg:text-right">
-              Disclaimer: Unstra provides AI-driven contract analysis for informational purposes only. We are not a law firm and do not provide legal advice.
+        </div>
+      </section>
+
+      {/* 5. THE SOVEREIGN FOOTER */}
+      <footer className="pt-32 pb-12 px-10 max-w-7xl mx-auto border-t border-white/5 mt-20">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-24 text-left">
+          <div className="col-span-1 md:col-span-2">
+            <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-blue-500 mb-8 italic">Mission</h4>
+            <p className="text-zinc-400 text-sm font-bold italic leading-relaxed max-w-sm">
+              Empowering founders and auditors to sign with total confidence. 
+              Unstra is the specialized layer between you and the fine print.
             </p>
           </div>
+
+          <div>
+            <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-100 mb-8 italic underline underline-offset-8 decoration-zinc-100/30">Protocols</h4>
+            <ul className="space-y-6 text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">
+              <li><button onClick={(e) => scrollToSection(e, 'process')} className="hover:text-blue-500 transition-colors uppercase">Forensic Method</button></li>
+              <li><button onClick={(e) => scrollToSection(e, 'security')} className="hover:text-blue-500 transition-colors uppercase">Data Sovereignty</button></li>
+              {false && (<li><button onClick={() => router.push('/pricing')} className="hover:text-blue-500 transition-colors uppercase">Sovereign Pricing</button></li>)}
+              <li><button onClick={() => router.push('/login')} className="hover:text-blue-500 transition-colors uppercase text-left">Vault Access</button></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-100 mb-8 italic underline underline-offset-8 decoration-zinc-100/30">Compliance</h4>
+            <ul className="space-y-6 text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">
+              <li><a href="mailto:hello@unstra.com" className="hover:text-blue-500 transition-colors">Contact Team</a></li>
+              <li><a href="/privacy" className="hover:text-blue-500 transition-colors">Privacy Protocol</a></li>
+              <li><a href="/terms" className="hover:text-blue-500 transition-colors">Terms of Intelligence</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row justify-between items-center pt-12 border-t border-white/10 gap-8">
+          <div className="flex flex-col gap-2 items-center md:items-start text-center md:text-left">
+            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.4em]">© 2026 UNSTRA AI.</p>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+              <span className="text-[8px] font-black text-emerald-500/80 uppercase tracking-widest">Global Sensing Network Active</span>
+            </div>
+          </div>
+          
+          <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.1em] italic text-center md:text-right max-w-md leading-relaxed">
+            Disclaimer: Unstra provides AI-driven contract analysis for informational purposes only. 
+            We are not a law firm and do not provide legal advice. Sensed results should be verified by a qualified professional.
+          </p>
         </div>
       </footer>
     </div>

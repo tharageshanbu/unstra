@@ -22,6 +22,7 @@ export const metadata = {
   },
 };
 
+// layout.tsx
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans bg-[#F8FAFC]`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans bg-[#050505] text-white`} 
       >
         {children}
         <Analytics />
