@@ -49,7 +49,6 @@ const { organization, role } = useWorkspace();
           Uses flex-1 and overflow-hidden to prevent 
           double-scrollbars and match the Ledger page feel.
       */}
-/* ... inside the return of DashboardPage ... */
 
 <div className="flex-1 overflow-y-auto relative scrollbar-hide">
   {/* 1. Comment out the organization conditional */}
