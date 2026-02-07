@@ -13,7 +13,8 @@ const supabase = createClient();
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { organization, role, isLoading } = useWorkspace();
+// FIX: Removed isLoading because it doesn't exist on the return type
+const { organization, role } = useWorkspace();
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
