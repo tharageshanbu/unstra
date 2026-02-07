@@ -1,5 +1,6 @@
-import { createServerClient, type NextRequest } from '@supabase/ssr'
-import { NextResponse } from 'next/server'
+// 1. Separate the Supabase client from the Next.js types
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -11,6 +12,7 @@ export async function middleware(request: NextRequest) {
       cookies: {
         getAll() { return request.cookies.getAll() },
         setAll(cookiesToSet) {
+          // Sync cookies between request and response for consistent auth state
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           response = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
@@ -19,9 +21,10 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  // Verify the user session securely
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect /dashboard route
+  // Protect /dashboard route - Essential for the demo
   if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
