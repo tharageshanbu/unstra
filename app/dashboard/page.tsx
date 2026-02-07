@@ -30,7 +30,7 @@ const { organization, role } = useWorkspace();
   }, [router]);
 
   // Unified Loading State matching the Ledger aesthetic
-  if (isLoading || !user) return (
+  if (!user) return (
     <div className="min-h-screen flex items-center justify-center bg-black">
       <div className="relative">
         <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full animate-pulse" />
