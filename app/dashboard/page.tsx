@@ -49,13 +49,19 @@ const { organization, role } = useWorkspace();
           Uses flex-1 and overflow-hidden to prevent 
           double-scrollbars and match the Ledger page feel.
       */}
+/* ... inside the return of DashboardPage ... */
+
 <div className="flex-1 overflow-y-auto relative scrollbar-hide">
-   {/* This allows BusinessCommandCenter to scroll! */}
-   {!organization ? (
-     <SoloVault user={user} />
-   ) : (
-     <BusinessCommandCenter org={organization} role={role} user={user} />
-   )}
+  {/* 1. Comment out the organization conditional */}
+  {/* {!organization ? ( */}
+    
+    <SoloVault user={user} />
+  
+  {/* 2. Comment out the Business branch
+  ) : (
+    <BusinessCommandCenter org={organization} role={role!} user={user} />
+  )} 
+  */}
 </div>
     </motion.div>
   );
