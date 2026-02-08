@@ -75,7 +75,8 @@ export default function AuditHistory() {
   };
 
   const getRiskStyles = (score: number | null, status: string) => {
-    if (status === 'processing') return { color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20', fill: false };
+    // MODIFIED: Logic synchronized with SoloVault fallback pattern
+    if (status !== 'completed' && status !== 'failed') return { color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20', fill: false };
     if (status === 'failed') return { color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/40', fill: false };
     if (!score || score < 5) return { color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', fill: true };
     if (score < 8) return { color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/20', fill: true };
@@ -142,6 +143,7 @@ export default function AuditHistory() {
                         </span>
                         <div className="w-1 h-1 rounded-full bg-zinc-800" />
                         <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest px-2 py-1 bg-zinc-900/50 rounded-md border border-zinc-800/50">
+                          {/* MODIFIED: Catch-all logic matching SoloVault */}
                           {audit.status === 'completed' ? (audit.detected_language || 'ENGLISH') : audit.status === 'failed' ? 'ERROR' : 'PENDING'}
                         </span>
                       </div>
@@ -152,13 +154,24 @@ export default function AuditHistory() {
                     <div className="text-center md:text-right px-6 border-r border-white/5 w-28 shrink-0">
                       <p className="text-[8px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-1 leading-none">Risk Factor</p>
                       <span className={`text-sm font-black tabular-nums ${styles.color}`}>
-                        {audit.status === 'processing' ? 'SENSING' : audit.status === 'failed' ? 'ERROR' : `${audit.risk_score || 0}/10`}
+                        {/* MODIFIED: Explicit completed check prevents stuck sensing */}
+                        {audit.status === 'completed' ? `${audit.risk_score || 0}/10` : audit.status === 'failed' ? 'ERROR' : 'SENSING'}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-3 min-w-[100px] shrink-0">
-                      <div className={`w-2 h-2 rounded-full ${audit.status === 'completed' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : audit.status === 'failed' ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-blue-500 animate-pulse'}`} />
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${audit.status === 'completed' ? 'text-emerald-500' : audit.status === 'failed' ? 'text-red-500' : 'text-blue-500'}`}>
+                      {/* MODIFIED: Dot color logic pulled from SoloVault */}
+                      <div className={`w-2 h-2 rounded-full ${
+                        audit.status === 'completed' 
+                          ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' 
+                          : audit.status === 'failed' 
+                            ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' 
+                            : 'bg-blue-500 animate-pulse'
+                      }`} />
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${
+                        audit.status === 'completed' ? 'text-emerald-500' : audit.status === 'failed' ? 'text-red-500' : 'text-blue-500'
+                      }`}>
+                        {/* MODIFIED: Direct string mapping from SoloVault */}
                         {audit.status === 'completed' ? 'SECURED' : audit.status === 'failed' ? 'FAILED' : 'SENSING'}
                       </span>
                     </div>
@@ -179,7 +192,6 @@ export default function AuditHistory() {
             })}
           </AnimatePresence>
 
-          {/* HARDENED EMPTY STATE: Guidance Protocol */}
           {processedAudits.length === 0 && !loading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-32 text-center border-2 border-dashed border-white/5 rounded-[48px]">
               <ShieldCheck className="w-16 h-16 text-zinc-800 mx-auto mb-6 opacity-20" />

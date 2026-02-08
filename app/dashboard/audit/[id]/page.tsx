@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { 
   ArrowLeft, ShieldAlert, FileText, Copy, MapPin, Users, 
   ExternalLink, CheckCircle, Calendar, Download,
-  DollarSign, Globe, Briefcase, Zap, Activity, RefreshCw, ChevronDown, Check
+  DollarSign, Globe, Briefcase, Zap, Activity, RefreshCw, ChevronDown, Check, AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import jsPDF from 'jspdf';
@@ -35,6 +35,7 @@ export default function ReportPage() {
   const [selectedLang, setSelectedLang] = useState('original');
   const [activeFlagIndex, setActiveFlagIndex] = useState(0);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -42,23 +43,53 @@ export default function ReportPage() {
   const fetchReport = async () => {
     const { data } = await supabase.from('audits').select('*').eq('id', id).single();
     if (data) {
-      setReport(data);
-      if (data.original_analysis) {
-        setOriginalReport({
-          ...data,
-          verdict: data.original_analysis.ceo_summary,
-          meta_data: {
-            all_dates: data.original_analysis.sensed_dates,
-            all_financials: data.original_analysis.sensed_financials,
-            all_flags: data.original_analysis.red_flags
-          },
-          missing_clauses: data.original_analysis.missing_clauses
-        });
-      } else {
-        setOriginalReport(data);
+      const rawOriginal = data.original_analysis || {};
+      const normalizedGaps = (rawOriginal.missing_clauses || []).map((c: any) => 
+        typeof c === 'object' ? `${c.label}: ${c.desc}` : c
+      );
+
+      const formattedOriginal = {
+        ...data,
+        verdict: rawOriginal.ceo_summary || data.verdict,
+        meta_data: {
+          all_dates: rawOriginal.sensed_dates || [],
+          all_financials: rawOriginal.sensed_financials || [],
+          all_flags: rawOriginal.red_flags || []
+        },
+        missing_clauses: normalizedGaps
+      };
+
+      setReport(formattedOriginal);
+      setOriginalReport(formattedOriginal);
+
+      const savedLang = localStorage.getItem(`lang_${id}`);
+      if (savedLang && savedLang !== 'original' && data.translations?.[savedLang]) {
+        applyVaultLanguage(data, savedLang);
       }
+
       const { data: urlData } = await supabase.storage.from('contracts').createSignedUrl(data.file_path, 3600);
       if (urlData) setFileUrl(urlData.signedUrl);
+    }
+  };
+
+  const applyVaultLanguage = (baseReport: any, lang: string) => {
+    if (baseReport?.translations?.[lang]) {
+      const vault = baseReport.translations[lang];
+      const normalizedGaps = (vault.gaps || []).map((c: any) => 
+        typeof c === 'object' ? `${c.label}: ${c.desc}` : c
+      );
+
+      setSelectedLang(lang);
+      setReport({
+        ...baseReport,
+        verdict: vault.verdict,
+        meta_data: {
+          all_flags: vault.flags || [],
+          all_dates: vault.dates || [],
+          all_financials: vault.financials || []
+        },
+        missing_clauses: normalizedGaps
+      });
     }
   };
 
@@ -71,69 +102,69 @@ export default function ReportPage() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [id]);
 
- const handleLanguageChange = async (newLang: string) => {
+  const handleLanguageChange = async (newLang: string) => {
     setIsDropdownOpen(false);
-    if (newLang === 'original') { setSelectedLang('original'); setReport(originalReport); return; }
+    setRetryError(null);
+    if (newLang === 'original') { 
+      setSelectedLang('original'); 
+      setReport(originalReport); 
+      localStorage.setItem(`lang_${id}`, 'original');
+      return; 
+    }
+    if (report?.translations?.[newLang]) {
+      applyVaultLanguage(report, newLang);
+      localStorage.setItem(`lang_${id}`, newLang);
+      return;
+    }
     setSelectedLang(newLang);
     setIsTranslating(true);
-    
     try {
-      // 1. First, invoke the function to ensure the translation exists in the vault
-      const { data: funcData, error: funcError } = await supabase.functions.invoke('contract-audit', {
+      const { error: funcError } = await supabase.functions.invoke('contract-audit', {
         body: { record: { id, file_path: report?.file_path }, language: newLang, translation_only: true }
       });
       if (funcError) throw funcError;
-
-      // 2. Fetch the updated record to get the latest 'translations' object
-      const { data: updated, error: fetchError } = await supabase.from('audits').select('*').eq('id', id).single();
-      if (fetchError) throw fetchError;
-
-      // 3. Map the vaulted language data to the UI state
+      const { data: updated } = await supabase.from('audits').select('*').eq('id', id).single();
       if (updated?.translations?.[newLang]) {
-        const vault = updated.translations[newLang];
-        setReport({
-          ...updated,
-          verdict: vault.verdict,
-          meta_data: {
-            all_flags: vault.flags,
-            all_dates: vault.dates,
-            all_financials: vault.financials
-          },
-          missing_clauses: vault.gaps
-        });
-      } else {
-        setReport(updated);
+        localStorage.setItem(`lang_${id}`, newLang);
+        applyVaultLanguage(updated, newLang);
       }
     } catch (err: any) { 
-      console.error("Vault Sync Error:", err.message); 
+      setRetryError("High Latency. Please try again.");
+      setSelectedLang('original');
+      setReport(originalReport);
     } finally { 
       setIsTranslating(false); 
     }
   };
 
   const downloadPDFReport = () => {
-    const source = originalReport;
+    const source = originalReport; 
     const doc = new jsPDF();
+    
+    // 1. Black Forensic Header
     doc.setFillColor(0, 0, 0);
     doc.rect(0, 0, 210, 55, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22); doc.text("UNSTRA FORENSIC CERTIFICATE", 15, 25);
     doc.setFontSize(8);
     doc.text(`VERIFIED ID: ${id}`, 15, 35);
-    doc.text(`SOURCE FILE: ${report.file_name}`, 15, 41);
-    doc.text(`LEGAL JURISDICTION: ${report.jurisdiction?.toUpperCase()}`, 15, 47);
-    doc.text(`ISSUED: ${new Date(report.created_at).toLocaleDateString()}`, 165, 25);
+    doc.text(`SOURCE FILE: ${source.file_name}`, 15, 41);
+    doc.text(`LEGAL JURISDICTION: ${source.jurisdiction?.toUpperCase()}`, 15, 47);
+    doc.text(`ISSUED: ${new Date(source.created_at).toLocaleDateString()}`, 165, 25);
+    
+    // 2. Intelligence Verdict Section
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(14); doc.text("INTELLIGENCE VERDICT", 15, 70);
     doc.setFontSize(10);
     const splitVerdict = doc.splitTextToSize(`"${source.verdict}"`, 180);
     doc.text(splitVerdict, 15, 80);
-    const vHeight = splitVerdict.length * 5;
+    
+    // 3. Vital Forensic Data Table
     autoTable(doc, {
-      startY: 85 + vHeight,
+      startY: 85 + (splitVerdict.length * 5),
       head: [['DOMAIN', 'FORENSIC DATA POINT', 'STATUS']],
       body: [
-        ['DOC TYPE', source.document_type?.toUpperCase(), 'VERIFIED'],
+        ['DOC TYPE', source.document_type?.toUpperCase() || 'GENERAL', 'VERIFIED'],
         ['PARTY A', source.party_a_name, 'ACTIVE'],
         ['PARTY B', source.party_b_name, 'ACTIVE'],
         ['VALUATION', source.contract_value || 'TBD', 'FORENSIC'],
@@ -141,31 +172,50 @@ export default function ReportPage() {
       ],
       headStyles: { fillColor: [37, 99, 235] }, theme: 'striped'
     });
-    let fY = (doc as any).lastAutoTable.finalY;
-    doc.setFontSize(14); doc.text("NEGOTIATION PLAYBOOK", 15, fY + 15);
+
+    let currentY = (doc as any).lastAutoTable.finalY + 15;
+
+    // 4. Milestone Ledger
+    doc.setFontSize(14); doc.text("MILESTONE SENSING", 15, currentY);
     autoTable(doc, {
-      startY: fY + 20,
-      head: [['ISSUE', 'SEVERITY', 'NEGOTIATION SCRIPT']],
-      body: source.meta_data.all_flags.map((f: any) => [f.issue, f.severity.toUpperCase(), f.script]),
-      headStyles: { fillColor: [220, 38, 38] },
-      columnStyles: { 2: { cellWidth: 100 } }
+      startY: currentY + 5,
+      head: [['LABEL', 'DETECTED VALUE']],
+      body: source.meta_data.all_dates.map((d: any) => [d.label, d.value]),
+      theme: 'grid',
+      headStyles: { fillColor: [82, 82, 91] }
     });
-    fY = (doc as any).lastAutoTable.finalY;
+
+    currentY = (doc as any).lastAutoTable.finalY + 15;
+
+    // 5. Fiscal Ledger
+    doc.setFontSize(14); doc.text("FISCAL FORENSIC", 15, currentY);
+    autoTable(doc, {
+      startY: currentY + 5,
+      head: [['FISCAL LABEL', 'AMOUNT']],
+      body: source.meta_data.all_financials.map((f: any) => [f.label, f.value]),
+      theme: 'grid',
+      headStyles: { fillColor: [22, 163, 74] }
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 15;
+    
+    // 6. Sensed Gaps
     if (source.missing_clauses?.length > 0) {
-      doc.text("SENSE GAPS", 15, fY + 15);
+      doc.setFontSize(14); doc.text("SENSED INTELLIGENCE GAPS", 15, currentY);
       autoTable(doc, {
-        startY: fY + 20,
+        startY: currentY + 5,
         body: source.missing_clauses.map((c: string) => [c]),
         theme: 'plain',
-        styles: { textColor: [220, 38, 38], fontStyle: 'bold' }
+        styles: { textColor: [220, 38, 38], fontStyle: 'bold', cellPadding: 2 }
       });
     }
-    doc.save(`UNSTRA_AUDIT_${report.file_name.split('.')[0]}.pdf`);
+    
+    doc.save(`UNSTRA_AUDIT_${source.file_name.split('.')[0]}.pdf`);
   };
 
   const allFlags = useMemo(() => {
     const flags = report?.meta_data?.all_flags || [];
-    return [...flags].sort((a, b) => (a.severity === 'high' ? -1 : 1));
+    return [...flags].sort((a, b) => (a.severity?.toLowerCase() === 'high' ? -1 : 1));
   }, [report]);
 
   const ledgerDates = useMemo(() => report?.meta_data?.all_dates || [], [report]);
@@ -180,69 +230,54 @@ export default function ReportPage() {
   if (!report) return <div className="min-h-screen bg-black flex items-center justify-center"><Activity className="animate-spin text-blue-500" /></div>;
 
   return (
-    <main className="min-h-screen bg-black text-white pb-20 overflow-x-hidden">
-      {isTranslating && (
-        <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center">
-          <RefreshCw className="animate-spin text-blue-500 mb-4" size={32} />
-          <p className="text-[10px] font-black uppercase tracking-[0.3em]">Re-Sensing In {selectedLang}...</p>
-        </div>
-      )}
+    <main className="min-h-screen bg-black text-white pb-20 pt-16 md:pt-0 overflow-x-hidden">
+      <AnimatePresence>
+        {isTranslating && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center">
+            <RefreshCw className="animate-spin text-blue-500 mb-4" size={32} />
+            <p className="text-[10px] font-black uppercase tracking-[0.3em]">Re-Sensing In {selectedLang}...</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className="max-w-[1440px] mx-auto p-8">
-        {/* HEADER LAYER FIX */}
-        <div className="flex items-center justify-between mb-10 relative z-[200]">
-          <button onClick={() => router.push('/dashboard/audit-history')} className="flex items-center gap-2 text-zinc-500 hover:text-white text-[10px] font-black uppercase tracking-[0.2em] transition-all group">
+      <div className="max-w-[1440px] mx-auto p-4 md:p-8 mt-12 md:mt-0">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 relative z-[200]">
+          <button onClick={() => router.push('/dashboard/audit-history')} className="flex items-center gap-2 text-zinc-500 hover:text-white text-[10px] font-black uppercase tracking-[0.2em] transition-all group w-fit">
             <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Intelligence Ledger
           </button>
 
-          <div className="flex items-center gap-4">
-            <button onClick={downloadPDFReport} className="flex items-center gap-2 bg-blue-600/10 border border-blue-500/20 px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600/20 transition-all text-blue-400">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <button onClick={downloadPDFReport} className="flex items-center justify-center gap-2 bg-blue-600/10 border border-blue-500/20 px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600/20 transition-all text-blue-400">
               <Download size={14} /> Export Certificate
             </button>
 
-            <div className="flex items-center gap-3 bg-zinc-900/80 border border-white/10 p-1.5 rounded-2xl px-4 backdrop-blur-xl relative" ref={dropdownRef}>
-              <Globe size={14} className="text-blue-400" />
-              <button 
-                onClick={() => handleLanguageChange('original')}
-                className={`text-[9px] font-black uppercase px-4 py-2 rounded-xl transition-all ${selectedLang === 'original' ? 'bg-blue-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}
-              >
-                {report.detected_language || 'English'} (Source)
-              </button>
+            <div className="flex items-center justify-between gap-3 bg-zinc-900/80 border border-white/10 p-1.5 rounded-2xl px-4 backdrop-blur-xl relative" ref={dropdownRef}>
+              <div className="flex items-center gap-2">
+                <Globe size={14} className="text-blue-400" />
+                <button 
+                  onClick={() => handleLanguageChange('original')}
+                  className={`text-[9px] font-black uppercase px-3 py-2 rounded-xl transition-all ${selectedLang === 'original' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-zinc-500 hover:text-white'}`}
+                >
+                  {report.detected_language || 'English'} (Source)
+                </button>
+              </div>
               <div className="w-[1px] h-5 bg-white/10 mx-1" />
-              
-              <button 
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white group"
-              >
+              <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white group">
                 {selectedLang === 'original' ? 'Translate To' : selectedLang}
                 <ChevronDown size={14} className={`text-zinc-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
-
               <AnimatePresence>
                 {isDropdownOpen && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 5 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 top-full mt-2 w-[220px] bg-zinc-950 border border-white/10 rounded-2xl p-2 backdrop-blur-3xl shadow-[0_20px_60px_rgba(0,0,0,1)] z-[9999]"
-                  >
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 5 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 top-full mt-2 w-[220px] bg-zinc-950 border border-white/10 rounded-2xl p-2 backdrop-blur-3xl shadow-[0_20px_60px_rgba(0,0,0,1)] z-[9999]">
                     <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
                       {report.detected_language?.toLowerCase() !== 'english' && (
-                        <button
-                          onClick={() => handleLanguageChange('English')}
-                          className="w-full text-left px-4 py-3 rounded-xl text-[10px] font-bold text-zinc-400 hover:bg-white/5 hover:text-white flex items-center justify-between"
-                        >
+                        <button onClick={() => handleLanguageChange('English')} className="w-full text-left px-4 py-3 rounded-xl text-[10px] font-bold text-zinc-400 hover:bg-white/5 hover:text-white flex items-center justify-between">
                           ENGLISH {selectedLang === 'English' && <Check size={12} className="text-blue-500" />}
                         </button>
                       )}
                       {LANGUAGES.map(lang => lang.code !== report.detected_language && (
-                        <button
-                          key={lang.code}
-                          onClick={() => handleLanguageChange(lang.code)}
-                          className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-bold transition-all flex items-center justify-between mb-1 ${selectedLang === lang.code ? 'bg-blue-600 text-white' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}
-                        >
-                          {lang.name}
-                          {selectedLang === lang.code && <Check size={12} />}
+                        <button key={lang.code} onClick={() => handleLanguageChange(lang.code)} className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-bold transition-all flex items-center justify-between mb-1 ${selectedLang === lang.code ? 'bg-blue-600 text-white' : 'text-zinc-400 hover:bg-white/5'}`}>
+                          {lang.name} {selectedLang === lang.code && <Check size={12} />}
                         </button>
                       ))}
                     </div>
@@ -253,14 +288,19 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* 1. IDENTITY BAR */}
+        {retryError && (
+          <div className="mb-6 bg-orange-500/10 border border-orange-500/20 p-4 rounded-2xl flex items-center gap-3 text-orange-400 text-[10px] font-bold uppercase tracking-widest">
+            <AlertTriangle size={16} /> {retryError}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 bg-white/[0.02] border border-white/5 p-8 rounded-[40px] backdrop-blur-md relative z-[1]">
           <div className="flex items-center gap-4 group cursor-help" title={report.document_type}>
             <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500 group-hover:scale-110 transition-transform"><Briefcase size={20}/></div>
             <div className="min-w-0"><p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Doc Type</p>
             <p className="text-sm font-bold uppercase truncate group-hover:text-blue-400 transition-colors">{report.document_type || 'Detecting...'}</p></div>
           </div>
-          <div className="flex items-center gap-4 border-x border-white/5 px-6 group cursor-help" title={report.jurisdiction}>
+          <div className="flex items-center gap-4 border-white/5 md:border-x px-0 md:px-6 group cursor-help" title={report.jurisdiction}>
             <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-500 group-hover:scale-110 transition-transform"><MapPin size={20}/></div>
             <div className="min-w-0"><p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Jurisdiction</p>
             <p className="text-sm font-bold uppercase truncate group-hover:text-purple-400 transition-colors">{report.jurisdiction || 'Detecting...'}</p></div>
@@ -273,7 +313,6 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* 2. VERDICT */}
         <div className={`p-8 rounded-[40px] mb-12 border transition-all duration-700 ${report.risk_score > 7 ? 'bg-red-500/10 border-red-500/20 shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-pulse' : 'bg-blue-600/10 border-blue-500/20 shadow-[0_0_50px_rgba(59,130,246,0.1)]'}`}>
           <div className="flex items-center gap-2 text-blue-400 font-black text-[10px] uppercase tracking-[0.3em] mb-4"><Zap size={14} fill="currentColor" /> Intelligence Verdict</div>
           <h2 className="text-2xl font-bold italic leading-relaxed text-zinc-100">"{report.verdict || "Analysis in progress..."}"</h2>
@@ -282,7 +321,6 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* 3. SENSING LEDGER */}
         <div className="mb-12 grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-white/[0.01] border border-white/5 p-8 rounded-[32px] backdrop-blur-sm shadow-inner">
               <p className="text-[10px] font-black text-zinc-500 uppercase mb-8 flex items-center gap-3 tracking-[0.2em]"><Calendar size={16} className="text-blue-500"/> Milestone Sensing</p>
@@ -311,7 +349,6 @@ export default function ReportPage() {
             </div>
         </div>
 
-        {/* 4. PLAYBOOK & PREVIEW */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           <div className="col-span-12 lg:col-span-7 space-y-4">
             {allFlags.map((flag: any, index: number) => (
@@ -321,8 +358,8 @@ export default function ReportPage() {
                 </div>
                 {activeFlagIndex === index && (
                   <div className="mt-6 space-y-6 animate-in fade-in duration-500">
-                    <div className="bg-white/5 p-6 rounded-2xl border border-white/5 italic text-zinc-400 text-sm font-serif leading-relaxed">"{flag.quote}"</div>
-                    <div className="bg-blue-600/5 border border-blue-500/20 p-6 rounded-2xl text-sm italic text-zinc-300">
+                    <div className="bg-white/5 p-5 md:p-6 rounded-2xl border border-white/5 italic text-zinc-400 text-sm font-serif leading-relaxed">"{flag.quote}"</div>
+                    <div className="bg-blue-600/5 border border-blue-500/20 p-5 md:p-6 rounded-2xl text-sm italic text-zinc-300">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Negotiation Script</span>
                         <button onClick={(e) => { e.stopPropagation(); copyToClipboard(flag.script, index); }}>
@@ -358,7 +395,6 @@ export default function ReportPage() {
                     <p className="text-xl text-zinc-950 italic leading-relaxed">"{allFlags[activeFlagIndex]?.quote}"</p>
                   </div>
                   
-                  {/* FIXED SENSED GAPS ICON SIZING */}
                   <div className="mt-16 pt-10 border-t border-zinc-100">
                     <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-6 font-sans">Sensed Intelligence Gaps:</p>
                     <div className="space-y-3">

@@ -1,4 +1,3 @@
-// 1. Separate the Supabase client from the Next.js types
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -12,7 +11,6 @@ export async function middleware(request: NextRequest) {
       cookies: {
         getAll() { return request.cookies.getAll() },
         setAll(cookiesToSet) {
-          // Sync cookies between request and response for consistent auth state
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           response = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
@@ -21,11 +19,14 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Verify the user session securely
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect /dashboard route - Essential for the demo
-  if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
+  // Define our guards
+  const isLoginPage = request.nextUrl.pathname === '/login'
+  const isDashboard = request.nextUrl.pathname.startsWith('/dashboard')
+
+  // The "Both-Environments" Fix: Only redirect if they are unauthorized AND trying to access a protected route
+  if (!user && isDashboard && !isLoginPage) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
@@ -33,5 +34,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  // Matching both routes ensures the middleware manages the session for both
+  matcher: ['/dashboard/:path*', '/login'],
 }
