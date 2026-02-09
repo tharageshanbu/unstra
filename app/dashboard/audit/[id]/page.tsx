@@ -374,67 +374,81 @@ export default function ReportPage() {
             </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          <div className="col-span-12 lg:col-span-7 space-y-4">
-            {allFlags.map((flag: any, index: number) => (
-              <div key={index} onClick={() => setActiveFlagIndex(index)} className={`cursor-pointer transition-all border rounded-[32px] p-8 ${activeFlagIndex === index ? 'bg-zinc-900 border-blue-500/50 shadow-2xl scale-[1.01]' : 'bg-zinc-900/20 border-white/5 opacity-50 grayscale hover:grayscale-0'}`}>
-                <div className={`flex items-center gap-3 font-black text-[11px] uppercase tracking-widest ${flag.severity === 'high' ? 'text-red-500' : 'text-orange-500'}`}>
-                  <ShieldAlert size={18} /> Conflict #{index + 1}: {flag.issue}
-                </div>
-                {activeFlagIndex === index && (
-                  <div className="mt-6 space-y-6 animate-in fade-in duration-500">
-                    <div className="bg-white/5 p-5 md:p-6 rounded-2xl border border-white/5 italic text-zinc-400 text-sm font-serif leading-relaxed">"{flag.quote}"</div>
-                    <div className="bg-blue-600/5 border border-blue-500/20 p-5 md:p-6 rounded-2xl text-sm italic text-zinc-300">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Negotiation Script</span>
-                        <button onClick={(e) => { e.stopPropagation(); copyToClipboard(flag.script, index); }}>
-                          {copiedIndex === index ? <CheckCircle size={14} className="text-blue-500"/> : <Copy size={14} />}
-                        </button>
-                      </div>
-                      {flag.script}
-                    </div>
-                  </div>
-                )}
+<div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+  {/* CONFLICTS COLUMN */}
+  <div className="col-span-12 lg:col-span-7 space-y-4">
+    {allFlags.map((flag: any, index: number) => (
+      <div 
+        key={index} 
+        onClick={() => setActiveFlagIndex(index)} 
+        className={`cursor-pointer transition-all border rounded-[28px] md:rounded-[32px] p-5 md:p-8 ${
+          activeFlagIndex === index ? 'bg-zinc-900 border-blue-500/50 shadow-2xl scale-[1.01]' : 'bg-zinc-900/20 border-white/5 opacity-50 grayscale hover:grayscale-0'
+        }`}
+      >
+        <div className={`flex flex-wrap items-center gap-3 font-black text-[10px] md:text-[11px] uppercase tracking-widest ${flag.severity === 'high' ? 'text-red-500' : 'text-orange-500'}`}>
+          <ShieldAlert size={18} className="shrink-0" /> Conflict #{index + 1}: <span className="break-words">{flag.issue}</span>
+        </div>
+        
+        {activeFlagIndex === index && (
+          <div className="mt-6 space-y-6 animate-in fade-in duration-500">
+            <div className="bg-white/5 p-4 md:p-6 rounded-2xl border border-white/5 italic text-zinc-400 text-sm font-serif leading-relaxed break-words">
+              "{flag.quote}"
+            </div>
+            <div className="bg-blue-600/5 border border-blue-500/20 p-4 md:p-6 rounded-2xl text-sm italic text-zinc-300">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Negotiation Script</span>
+                <button onClick={(e) => { e.stopPropagation(); copyToClipboard(flag.script, index); }}>
+                  {copiedIndex === index ? <CheckCircle size={14} className="text-blue-500"/> : <Copy size={14} />}
+                </button>
               </div>
-            ))}
+              <p className="break-words leading-relaxed">{flag.script}</p>
+            </div>
           </div>
+        )}
+      </div>
+    ))}
+  </div>
 
-          <div className="col-span-12 lg:col-span-5 lg:sticky lg:top-8">
-            <div className="bg-white rounded-[40px] h-[850px] flex flex-col border border-white/10 overflow-hidden shadow-2xl">
-                <div className="bg-zinc-50 p-6 border-b flex items-center justify-between text-black shrink-0">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <FileText size={20} className="text-blue-600 shrink-0" />
-                    <span className="text-[10px] font-black uppercase tracking-widest truncate">{report.file_name || 'Document'}</span>
-                  </div>
-                  {fileUrl && (
-                    <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-all hover:scale-105">
-                      <span className="text-[9px] font-black uppercase tracking-widest">Full View</span>
-                      <ExternalLink size={14} />
-                    </a>
-                  )}
+  {/* WHITE FORENSIC SECTION */}
+  <div className="col-span-12 lg:col-span-5 lg:sticky lg:top-8 w-full">
+    {/* FIXED: Removed h-[850px], added min-h for mobile flexibility */}
+    <div className="bg-white rounded-[32px] md:rounded-[40px] min-h-[500px] lg:h-[850px] flex flex-col border border-white/10 overflow-hidden shadow-2xl">
+        <div className="bg-zinc-50 p-5 md:p-6 border-b flex items-center justify-between text-black shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <FileText size={20} className="text-blue-600 shrink-0" />
+            <span className="text-[10px] font-black uppercase tracking-widest truncate">{report.file_name || 'Document'}</span>
+          </div>
+          {fileUrl && (
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600">
+              <ExternalLink size={14} />
+            </a>
+          )}
+        </div>
+        
+        <div className="p-6 md:p-10 text-zinc-800 font-serif overflow-y-auto flex-1 bg-[#F9FAFB]">
+          <div className="relative pl-6 md:pl-8 border-l-[3px] border-red-500 mb-8 md:mb-10">
+            <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-4 font-sans italic leading-none">Forensic Evidence:</p>
+            {/* break-words handles long translated strings */}
+            <p className="text-lg md:text-xl text-zinc-950 italic leading-relaxed break-words">
+              "{allFlags[activeFlagIndex]?.quote}"
+            </p>
+          </div>
+          
+          <div className="mt-10 md:mt-16 pt-8 md:pt-10 border-t border-zinc-100">
+            <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-6 font-sans">Sensed Intelligence Gaps:</p>
+            <div className="space-y-3">
+              {report.missing_clauses?.map((c: string, i: number) => (
+                <div key={i} className="bg-red-500/5 text-red-700 px-4 md:px-5 py-3 rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest flex items-start gap-3 border border-red-500/10 shadow-sm">
+                  <ShieldAlert size={14} className="shrink-0 mt-0.5" /> 
+                  <span className="leading-snug break-words">{c}</span>
                 </div>
-                
-                <div className="p-10 text-zinc-800 font-serif overflow-y-auto flex-1 bg-[#F9FAFB]">
-                  <div className="relative pl-8 border-l-[3px] border-red-500 mb-10">
-                    <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-4 font-sans italic leading-none">Forensic Evidence:</p>
-                    <p className="text-xl text-zinc-950 italic leading-relaxed">"{allFlags[activeFlagIndex]?.quote}"</p>
-                  </div>
-                  
-                  <div className="mt-16 pt-10 border-t border-zinc-100">
-                    <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-6 font-sans">Sensed Intelligence Gaps:</p>
-                    <div className="space-y-3">
-                      {report.missing_clauses?.map((c: string, i: number) => (
-                        <div key={i} className="bg-red-500/5 text-red-700 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-start gap-3 border border-red-500/10 shadow-sm">
-                          <ShieldAlert size={14} className="shrink-0 mt-0.5" /> 
-                          <span className="leading-snug">{c}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+              ))}
             </div>
           </div>
         </div>
+    </div>
+  </div>
+</div>
       </div>
     </main>
   );
