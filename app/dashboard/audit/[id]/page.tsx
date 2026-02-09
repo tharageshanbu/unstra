@@ -138,6 +138,7 @@ export default function ReportPage() {
   };
 
   const downloadPDFReport = () => {
+    // SECURITY: PDF remains locked to English originalReport to prevent non-Latin character crashes
     const source = originalReport; 
     const doc = new jsPDF();
     
@@ -174,6 +175,18 @@ export default function ReportPage() {
     });
 
     let currentY = (doc as any).lastAutoTable.finalY + 15;
+
+    // ADDED: NEGOTIATION CONFLICTS TABLE
+    doc.setFontSize(14); doc.text("NEGOTIATION CONFLICTS (ENGLISH SOURCE)", 15, currentY);
+    autoTable(doc, {
+      startY: currentY + 5,
+      head: [['ISSUE', 'SEVERITY', 'NEGOTIATION SCRIPT']],
+      body: source.meta_data.all_flags.map((f: any) => [f.issue, f.severity.toUpperCase(), f.script]),
+      headStyles: { fillColor: [220, 38, 38] },
+      columnStyles: { 2: { cellWidth: 100 } }
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 15;
 
     // 4. Milestone Ledger
     doc.setFontSize(14); doc.text("MILESTONE SENSING", 15, currentY);
@@ -313,13 +326,25 @@ export default function ReportPage() {
           </div>
         </div>
 
-        <div className={`p-8 rounded-[40px] mb-12 border transition-all duration-700 ${report.risk_score > 7 ? 'bg-red-500/10 border-red-500/20 shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-pulse' : 'bg-blue-600/10 border-blue-500/20 shadow-[0_0_50px_rgba(59,130,246,0.1)]'}`}>
-          <div className="flex items-center gap-2 text-blue-400 font-black text-[10px] uppercase tracking-[0.3em] mb-4"><Zap size={14} fill="currentColor" /> Intelligence Verdict</div>
-          <h2 className="text-2xl font-bold italic leading-relaxed text-zinc-100">"{report.verdict || "Analysis in progress..."}"</h2>
-          <div className={`mt-6 inline-block px-5 py-2 rounded-full border font-black text-[10px] uppercase tracking-widest ${report.risk_score > 7 ? 'border-red-500/40 text-red-500' : 'border-blue-500/40 text-blue-400'}`}>
-            Risk Quotient: {report.risk_score || '—'}/10
-          </div>
-        </div>
+<div className={`p-8 rounded-[40px] mb-12 border transition-all duration-700 ${
+  report.risk_score >= 8 ? 'bg-red-500/10 border-red-500/20 shadow-lg animate-pulse' : 
+  report.risk_score >= 5 ? 'bg-orange-500/10 border-orange-500/20 shadow-md' : 
+  'bg-emerald-500/10 border-emerald-500/20 shadow-md'
+}`}>
+  <div className="flex items-center gap-2 text-blue-400 font-black text-[10px] uppercase tracking-[0.3em] mb-4">
+    <Zap size={14} fill="currentColor" /> Intelligence Verdict
+  </div>
+  <h2 className="text-2xl font-bold italic leading-relaxed text-zinc-100">
+    "{report.verdict || "Analysis in progress..."}"
+  </h2>
+  <div className={`mt-6 inline-block px-5 py-2 rounded-full border font-black text-[10px] uppercase tracking-widest ${
+    report.risk_score >= 8 ? 'border-red-500/40 text-red-500' : 
+    report.risk_score >= 5 ? 'border-orange-500/40 text-orange-400' : 
+    'border-emerald-500/40 text-emerald-400'
+  }`}>
+    Risk Quotient: {report.risk_score || '—'}/10
+  </div>
+</div>
 
         <div className="mb-12 grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-white/[0.01] border border-white/5 p-8 rounded-[32px] backdrop-blur-sm shadow-inner">

@@ -115,81 +115,77 @@ export default function AuditHistory() {
 
         <div className="space-y-4">
           <AnimatePresence mode="popLayout">
-            {processedAudits.map((audit) => {
-              const styles = getRiskStyles(audit.risk_score, audit.status);
-              return (
-                <motion.div key={audit.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }}
-                  onClick={() => router.push(`/dashboard/audit/${audit.id}`)}
-                  className={`group relative flex flex-col md:flex-row md:items-center justify-between p-6 lg:p-8 bg-zinc-950/50 backdrop-blur-md border border-white/5 rounded-[32px] hover:border-blue-500/30 transition-all cursor-pointer shadow-2xl overflow-hidden`}
-                >
-                  <div className="flex items-center gap-6 flex-1 min-w-0">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border relative transition-all ${styles.bg} ${styles.border} ${styles.glow}`}>
-                      {audit.status === 'failed' ? (
-                        <ShieldAlert className={`w-6 h-6 ${styles.color}`} />
-                      ) : (
-                        <>
-                          {styles.fill && <div className={`absolute inset-3 rounded-lg ${styles.bg.replace('/10', '/40')} blur-[2px] opacity-50`} />}
-                          <FileText className={`w-6 h-6 relative z-10 ${styles.color}`} strokeWidth={1.5} />
-                        </>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="text-[15px] font-black uppercase italic tracking-tight text-zinc-100 truncate group-hover:text-blue-400 transition-colors" title={audit.file_name}>
-                        {audit.file_name}
-                      </h3>
-                      <div className="flex items-center gap-3 mt-1.5 leading-none">
-                        <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">
-                          {new Date(audit.created_at).toLocaleDateString().replace(/\//g, '.')}
-                        </span>
-                        <div className="w-1 h-1 rounded-full bg-zinc-800" />
-                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest px-2 py-1 bg-zinc-900/50 rounded-md border border-zinc-800/50">
-                          {/* MODIFIED: Catch-all logic matching SoloVault */}
-                          {audit.status === 'completed' ? (audit.detected_language || 'ENGLISH') : audit.status === 'failed' ? 'ERROR' : 'PENDING'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+{processedAudits.map((audit) => {
+  const styles = getRiskStyles(audit.risk_score, audit.status);
+  return (
+    <motion.div key={audit.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }}
+      onClick={() => router.push(`/dashboard/audit/${audit.id}`)}
+      className={`group relative flex flex-col lg:flex-row lg:items-center justify-between p-5 lg:p-8 bg-zinc-950/50 backdrop-blur-md border border-white/5 rounded-[28px] lg:rounded-[32px] hover:border-blue-500/30 transition-all cursor-pointer shadow-2xl overflow-hidden`}
+    >
+      <div className="flex items-center gap-4 lg:gap-6 flex-1 min-w-0">
+        <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-2xl flex items-center justify-center shrink-0 border relative transition-all ${styles.bg} ${styles.border} ${styles.glow}`}>
+          {audit.status === 'failed' ? (
+            <ShieldAlert className={`w-5 h-5 lg:w-6 lg:h-6 ${styles.color}`} />
+          ) : (
+            <>
+              {styles.fill && <div className={`absolute inset-3 rounded-lg ${styles.bg.replace('/10', '/40')} blur-[2px] opacity-50`} />}
+              <FileText className={`w-5 h-5 lg:w-6 lg:h-6 relative z-10 ${styles.color}`} strokeWidth={1.5} />
+            </>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[13px] lg:text-[15px] font-black uppercase italic tracking-tight text-zinc-100 truncate group-hover:text-blue-400 transition-colors" title={audit.file_name}>
+            {audit.file_name}
+          </h3>
+          <div className="flex items-center gap-2 lg:gap-3 mt-1 leading-none">
+            <span className="text-[8px] lg:text-[9px] font-black text-zinc-500 uppercase tracking-widest">
+              {new Date(audit.created_at).toLocaleDateString().replace(/\//g, '.')}
+            </span>
+            <div className="w-1 h-1 rounded-full bg-zinc-800" />
+            <span className="text-[8px] lg:text-[9px] font-black text-zinc-400 uppercase tracking-widest px-2 py-1 bg-zinc-900/50 rounded-md border border-zinc-800/50">
+              {audit.status === 'completed' ? (audit.detected_language || 'ENGLISH') : audit.status === 'failed' ? 'ERROR' : 'PENDING'}
+            </span>
+          </div>
+        </div>
+      </div>
 
-                  <div className="flex items-center justify-between md:justify-end gap-10 mt-6 md:mt-0 pt-6 md:pt-0 border-t md:border-t-0 border-white/5">
-                    <div className="text-center md:text-right px-6 border-r border-white/5 w-28 shrink-0">
-                      <p className="text-[8px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-1 leading-none">Risk Factor</p>
-                      <span className={`text-sm font-black tabular-nums ${styles.color}`}>
-                        {/* MODIFIED: Explicit completed check prevents stuck sensing */}
-                        {audit.status === 'completed' ? `${audit.risk_score || 0}/10` : audit.status === 'failed' ? 'ERROR' : 'SENSING'}
-                      </span>
-                    </div>
+      <div className="grid grid-cols-2 lg:flex items-center justify-between lg:justify-end gap-6 lg:gap-10 mt-6 lg:mt-0 pt-5 lg:pt-0 border-t lg:border-t-0 border-white/5">
+        <div className="text-left lg:text-right lg:px-6 lg:border-r lg:border-white/5 lg:w-28 shrink-0">
+          <p className="text-[7px] lg:text-[8px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-1 leading-none">Risk Factor</p>
+          <span className={`text-xs lg:text-sm font-black tabular-nums ${styles.color}`}>
+            {audit.status === 'completed' ? `${audit.risk_score || 0}/10` : audit.status === 'failed' ? 'ERROR' : 'SENSING'}
+          </span>
+        </div>
 
-                    <div className="flex items-center gap-3 min-w-[100px] shrink-0">
-                      {/* MODIFIED: Dot color logic pulled from SoloVault */}
-                      <div className={`w-2 h-2 rounded-full ${
-                        audit.status === 'completed' 
-                          ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' 
-                          : audit.status === 'failed' 
-                            ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' 
-                            : 'bg-blue-500 animate-pulse'
-                      }`} />
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${
-                        audit.status === 'completed' ? 'text-emerald-500' : audit.status === 'failed' ? 'text-red-500' : 'text-blue-500'
-                      }`}>
-                        {/* MODIFIED: Direct string mapping from SoloVault */}
-                        {audit.status === 'completed' ? 'SECURED' : audit.status === 'failed' ? 'FAILED' : 'SENSING'}
-                      </span>
-                    </div>
+        <div className="flex items-center justify-end lg:justify-start gap-2 lg:gap-3 lg:min-w-[100px] shrink-0">
+          <div className={`w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full ${
+            audit.status === 'completed' 
+              ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' 
+              : audit.status === 'failed' 
+                ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' 
+                : 'bg-blue-500 animate-pulse'
+          }`} />
+          <span className={`text-[9px] lg:text-[10px] font-black uppercase tracking-widest ${
+            audit.status === 'completed' ? 'text-emerald-500' : audit.status === 'failed' ? 'text-red-500' : 'text-blue-500'
+          }`}>
+            {audit.status === 'completed' ? 'SECURED' : audit.status === 'failed' ? 'FAILED' : 'SENSING'}
+          </span>
+        </div>
 
-                    <div className="flex items-center justify-end gap-3 min-w-[90px] shrink-0">
-                      {audit.status !== 'completed' && (
-                        <button onClick={(e) => { e.stopPropagation(); handleRedo(e, audit); }} disabled={isRedoing === audit.id} className="p-3 bg-blue-500/5 hover:bg-blue-500 hover:text-white rounded-xl text-blue-500 transition-all border border-blue-500/10 shadow-lg" title="Initiate Redo Protocol">
-                          {isRedoing === audit.id ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}
-                        </button>
-                      )}
-                      <button onClick={(e) => { e.stopPropagation(); handleDelete(e, audit); }} disabled={isDeleting === audit.id} className="p-3 bg-red-500/5 hover:bg-red-500 hover:text-white rounded-xl text-red-500 transition-all border border-red-500/10 shadow-lg" title="Purge Document">
-                        {isDeleting === audit.id ? <Loader2 size={16} className="animate-spin text-white" /> : <Trash2 size={16} />}
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+        <div className="col-span-2 lg:col-span-1 flex items-center justify-end gap-2 lg:gap-3 lg:min-w-[90px] shrink-0">
+          {audit.status !== 'completed' && (
+            <button onClick={(e) => { e.stopPropagation(); handleRedo(e, audit); }} disabled={isRedoing === audit.id} className="p-2.5 lg:p-3 bg-blue-500/5 hover:bg-blue-500 hover:text-white rounded-xl text-blue-500 transition-all border border-blue-500/10 shadow-lg">
+              {isRedoing === audit.id ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
+            </button>
+          )}
+          <button onClick={(e) => { e.stopPropagation(); handleDelete(e, audit); }} disabled={isDeleting === audit.id} className="p-2.5 lg:p-3 bg-red-500/5 hover:bg-red-500 hover:text-white rounded-xl text-red-500 transition-all border border-red-500/10 shadow-lg">
+            {isDeleting === audit.id ? <Loader2 size={14} className="animate-spin text-white" /> : <Trash2 size={14} />}
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+})}
           </AnimatePresence>
 
           {processedAudits.length === 0 && !loading && (
