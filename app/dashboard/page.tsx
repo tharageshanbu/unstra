@@ -43,15 +43,15 @@ const { organization, role } = useWorkspace();
     <motion.div 
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }}
-      className="h-screen bg-black overflow-hidden flex flex-col"
-    >
+className="flex flex-col w-full">
+  
       {/* Standardized Container: 
           Uses flex-1 and overflow-hidden to prevent 
           double-scrollbars and match the Ledger page feel.
       */}
 
-<div className="flex-1 overflow-y-auto relative scrollbar-hide">
-  {/* 1. Comment out the organization conditional */}
+<div className="relative w-full">
+    {/* 1. Comment out the organization conditional */}
   {/* {!organization ? ( */}
     
     <SoloVault user={user} />

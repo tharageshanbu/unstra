@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useLayoutEffect } from 'react';
-import { Shield, LayoutDashboard, History, User, LogOut, Activity, Menu, X } from 'lucide-react';
+import { Shield, LayoutDashboard, History, User, LogOut, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from "@/lib/supabase/client";
@@ -23,10 +23,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchUser();
   }, []);
 
-  // ARCHITECT FIX: Instant sidebar closure on route change
+  // ARCHITECT FIX 1: Instant sidebar closure and scroll reset on route change
   useLayoutEffect(() => {
     setIsSidebarOpen(false);
   }, [pathname]);
+
+  // ARCHITECT FIX 2: Prevent background scroll when menu is open on mobile
+  useEffect(() => {
+    if (isSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isSidebarOpen]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -35,24 +45,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="flex min-h-screen bg-[#020202] overflow-hidden selection:bg-blue-500/30 font-sans">
+    /* h-[100dvh] ensures perfect fit on mobile browsers with shifting bars */
+    <div className="flex h-[100dvh] bg-[#020202] overflow-hidden selection:bg-blue-500/30 font-sans">
       
-      {/* MOBILE TRIGGER: Repositioned to prevent overlap */}
-      {!isSidebarOpen && (
-        <button 
-          onClick={() => setIsSidebarOpen(true)}
-          className="lg:hidden fixed top-6 left-6 z-[60] w-12 h-12 bg-zinc-900/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center justify-center shadow-2xl active:scale-90 transition-all"
-        >
-          <Menu size={22} className="text-blue-500" />
-        </button>
-      )}
-
       {/* ASIDE: THE COMMAND COLUMN */}
       <aside className={`
         fixed left-0 top-0 h-full w-72 border-r border-white/5 bg-[#050505] flex flex-col z-50 transition-transform duration-500 ease-in-out
         ${isSidebarOpen ? 'translate-x-0 shadow-[0_0_50px_rgba(0,0,0,0.9)]' : '-translate-x-full lg:translate-x-0'}
       `}>
-        {/* MOBILE CLOSE: Integrated into sidebar flow */}
         <button 
           onClick={() => setIsSidebarOpen(false)} 
           className="lg:hidden absolute top-8 right-8 text-zinc-500 hover:text-white transition-colors"
@@ -88,7 +88,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center border border-white/10 shrink-0 group-hover:border-blue-500/30 transition-colors">
               <User size={16} className="text-zinc-500 group-hover:text-blue-500" />
             </div>
-            {/* ARCHITECT FIX: Typography stabilization */}
             <div className="flex flex-col min-w-0 flex-1">
               <span className="text-[10px] font-bold text-white truncate lowercase leading-tight">{email || 'session.active'}</span>
               <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mt-1 italic">Authorized Session</span>
@@ -100,11 +99,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* MAIN VIEWPORT: Optimized scroll performance */}
-      <main className="flex-1 lg:ml-72 bg-[#020202] relative min-h-screen overflow-y-auto overflow-x-hidden 
+      {/* MAIN VIEWPORT: Force local scroll to stabilize mobile viewport */}
+      <main className="flex-1 lg:ml-72 bg-[#020202] relative h-full overflow-y-auto overflow-x-hidden 
         scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-        <div className="relative z-10 w-full">
+        
+        {/* ARCHITECT FIX 3: Trigger is now 'absolute' inside scrollable 'main' so it scrolls away */}
+        {!isSidebarOpen && (
+          <button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="lg:hidden absolute top-6 left-6 z-[60] w-12 h-12 bg-zinc-900/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center justify-center shadow-2xl active:scale-90 transition-all"
+          >
+            <Menu size={22} className="text-blue-500" />
+          </button>
+        )}
+
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] fixed" />
+        
+        <div className="relative z-10 w-full min-h-full flex flex-col">
           {children}
         </div>
       </main>
