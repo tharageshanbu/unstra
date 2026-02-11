@@ -168,8 +168,13 @@ export default function ReportPage() {
         ['DOC TYPE', source.document_type?.toUpperCase() || 'GENERAL', 'VERIFIED'],
         ['PARTY A', source.party_a_name, 'ACTIVE'],
         ['PARTY B', source.party_b_name, 'ACTIVE'],
-        ['VALUATION', source.contract_value || 'TBD', 'FORENSIC'],
-        ['RISK QUOTIENT', `${source.risk_score}/10`, source.risk_score > 7 ? 'CRITICAL' : 'STABLE'],
+[
+  'VALUATION', 
+  source.contract_value 
+    ? `${source.contract_value}${source.currency_code ? ` ${source.currency_code}` : ''}` 
+    : '', 
+  'FORENSIC'
+],      ['RISK QUOTIENT', `${source.risk_score}/10`, source.risk_score > 7 ? 'CRITICAL' : 'STABLE'],
       ],
       headStyles: { fillColor: [37, 99, 235] }, theme: 'striped'
     });
@@ -201,11 +206,19 @@ export default function ReportPage() {
     currentY = (doc as any).lastAutoTable.finalY + 15;
 
     // 5. Fiscal Ledger
+// 5. Fiscal Ledger - Now including dynamic currency units
     doc.setFontSize(14); doc.text("FISCAL FORENSIC", 15, currentY);
     autoTable(doc, {
       startY: currentY + 5,
       head: [['FISCAL LABEL', 'AMOUNT']],
-      body: source.meta_data.all_financials.map((f: any) => [f.label, f.value]),
+// This logic checks if currency_code exists; if not, it returns an empty string
+body: source.meta_data.all_financials.map((f: any) => [
+  f.label, 
+  // Fix: Check if value exists first, then append currency only if it exists
+  f.value 
+    ? `${f.value}${source.currency_code ? ` ${source.currency_code}` : ''}` 
+    : ''
+]),
       theme: 'grid',
       headStyles: { fillColor: [22, 163, 74] }
     });
@@ -243,88 +256,111 @@ export default function ReportPage() {
   if (!report) return <div className="min-h-screen bg-black flex items-center justify-center"><Activity className="animate-spin text-blue-500" /></div>;
 
   return (
-    <main className="min-h-screen bg-black text-white pb-20 pt-16 md:pt-0 overflow-x-hidden">
-      <AnimatePresence>
-        {isTranslating && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center">
-            <RefreshCw className="animate-spin text-blue-500 mb-4" size={32} />
-            <p className="text-[10px] font-black uppercase tracking-[0.3em]">Re-Sensing In {selectedLang}...</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+<main className="min-h-screen bg-black text-white pb-20 pt-4 md:pt-0 overflow-x-hidden">
+  <AnimatePresence>
+    {isTranslating && (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center">
+        <RefreshCw className="animate-spin text-blue-500 mb-4" size={32} />
+        <p className="text-[10px] font-black uppercase tracking-[0.3em]">Re-Sensing In {selectedLang}...</p>
+      </motion.div>
+    )}
+  </AnimatePresence>
 
-      <div className="max-w-[1440px] mx-auto p-4 md:p-8 mt-12 md:mt-0">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 relative z-[200]">
-          <button onClick={() => router.push('/dashboard/audit-history')} className="flex items-center gap-2 text-zinc-500 hover:text-white text-[10px] font-black uppercase tracking-[0.2em] transition-all group w-fit">
-            <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Intelligence Ledger
+  {/* FIXED: mt-4 on mobile and md:mt-8 on desktop to eliminate the dead space */}
+<div className="max-w-[1440px] mx-auto p-4 md:p-8 mt-0 md:mt-0">      {/* PREMIUM ACTION BAR: Now aligned parallel to the menu icon */}
+<div className="flex flex-row items-center justify-end gap-3 mb-6 md:mb-12 relative z-[200]">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+        
+        {/* Compact Export Certificate: Label shortens on mobile */}
+        <button 
+          onClick={downloadPDFReport} 
+          className="flex items-center gap-2 bg-white/5 border border-white/10 hover:border-blue-500/50 px-3 md:px-5 py-2 md:py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-zinc-400 hover:text-blue-400 shrink-0"
+        >
+          <Download size={14} /> 
+          <span className="hidden sm:inline">Export Certificate</span>
+          <span className="sm:hidden">Export</span>
+        </button>
+
+        {/* Integrated Language Control Group */}
+        <div className="flex items-center gap-1 bg-zinc-900/50 border border-white/5 p-1 rounded-xl backdrop-blur-xl shrink-0">
+          <button 
+            onClick={() => handleLanguageChange('original')}
+            className={`text-[9px] font-black uppercase px-3 py-2 rounded-lg transition-all ${selectedLang === 'original' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-zinc-500 hover:text-white'}`}
+          >
+            <span className="hidden sm:inline">{report.detected_language || 'English'}</span>
+            <span className="sm:hidden">EN</span>
           </button>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-            <button onClick={downloadPDFReport} className="flex items-center justify-center gap-2 bg-blue-600/10 border border-blue-500/20 px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600/20 transition-all text-blue-400">
-              <Download size={14} /> Export Certificate
+          
+          <div className="w-[1px] h-3 bg-white/10 mx-1" />
+          
+          <div className="relative">
+            <button 
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)} 
+              className="flex items-center gap-2 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white"
+            >
+              {selectedLang === 'original' ? 'Translate To' : selectedLang}
+              <ChevronDown size={12} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            <div className="flex items-center justify-between gap-3 bg-zinc-900/80 border border-white/10 p-1.5 rounded-2xl px-4 backdrop-blur-xl relative" ref={dropdownRef}>
-              <div className="flex items-center gap-2">
-                <Globe size={14} className="text-blue-400" />
-                <button 
-                  onClick={() => handleLanguageChange('original')}
-                  className={`text-[9px] font-black uppercase px-3 py-2 rounded-xl transition-all ${selectedLang === 'original' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-zinc-500 hover:text-white'}`}
-                >
-                  {report.detected_language || 'English'} (Source)
-                </button>
-              </div>
-              <div className="w-[1px] h-5 bg-white/10 mx-1" />
-              <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white group">
-                {selectedLang === 'original' ? 'Translate To' : selectedLang}
-                <ChevronDown size={14} className={`text-zinc-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              <AnimatePresence>
-                {isDropdownOpen && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 5 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 top-full mt-2 w-[220px] bg-zinc-950 border border-white/10 rounded-2xl p-2 backdrop-blur-3xl shadow-[0_20px_60px_rgba(0,0,0,1)] z-[9999]">
-                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
-                      {report.detected_language?.toLowerCase() !== 'english' && (
-                        <button onClick={() => handleLanguageChange('English')} className="w-full text-left px-4 py-3 rounded-xl text-[10px] font-bold text-zinc-400 hover:bg-white/5 hover:text-white flex items-center justify-between">
-                          ENGLISH {selectedLang === 'English' && <Check size={12} className="text-blue-500" />}
-                        </button>
-                      )}
-                      {LANGUAGES.map(lang => lang.code !== report.detected_language && (
-                        <button key={lang.code} onClick={() => handleLanguageChange(lang.code)} className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-bold transition-all flex items-center justify-between mb-1 ${selectedLang === lang.code ? 'bg-blue-600 text-white' : 'text-zinc-400 hover:bg-white/5'}`}>
-                          {lang.name} {selectedLang === lang.code && <Check size={12} />}
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <AnimatePresence>
+              {isDropdownOpen && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 5 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 top-full mt-2 w-[220px] bg-zinc-950 border border-white/10 rounded-2xl p-2 backdrop-blur-3xl shadow-2xl z-[9999]">
+                  <div className="max-h-[300px] overflow-y-auto custom-scrollbar" ref={dropdownRef}>
+                    {report.detected_language?.toLowerCase() !== 'english' && (
+                      <button onClick={() => handleLanguageChange('English')} className="w-full text-left px-4 py-3 rounded-xl text-[10px] font-bold text-zinc-400 hover:bg-white/5 hover:text-white flex items-center justify-between">
+                        ENGLISH {selectedLang === 'English' && <Check size={12} className="text-blue-500" />}
+                      </button>
+                    )}
+                    {LANGUAGES.map(lang => lang.code !== report.detected_language && (
+                      <button key={lang.code} onClick={() => handleLanguageChange(lang.code)} className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-bold transition-all flex items-center justify-between mb-1 ${selectedLang === lang.code ? 'bg-blue-600 text-white' : 'text-zinc-400 hover:bg-white/5'}`}>
+                        {lang.name} {selectedLang === lang.code && <Check size={12} />}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
+      </div>
+    </div>
 
-        {retryError && (
-          <div className="mb-6 bg-orange-500/10 border border-orange-500/20 p-4 rounded-2xl flex items-center gap-3 text-orange-400 text-[10px] font-bold uppercase tracking-widest">
-            <AlertTriangle size={16} /> {retryError}
-          </div>
-        )}
+    {/* RETRY BLOCK: Preserved exactly as requested */}
+    {retryError && (
+      <div className="mb-6 bg-orange-500/10 border border-orange-500/20 p-4 rounded-2xl flex items-center gap-3 text-orange-400 text-[10px] font-bold uppercase tracking-widest">
+        <AlertTriangle size={16} /> {retryError}
+      </div>
+    )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 bg-white/[0.02] border border-white/5 p-8 rounded-[40px] backdrop-blur-md relative z-[1]">
-          <div className="flex items-center gap-4 group cursor-help" title={report.document_type}>
-            <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500 group-hover:scale-110 transition-transform"><Briefcase size={20}/></div>
-            <div className="min-w-0"><p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Doc Type</p>
-            <p className="text-sm font-bold uppercase truncate group-hover:text-blue-400 transition-colors">{report.document_type || 'Detecting...'}</p></div>
-          </div>
-          <div className="flex items-center gap-4 border-white/5 md:border-x px-0 md:px-6 group cursor-help" title={report.jurisdiction}>
-            <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-500 group-hover:scale-110 transition-transform"><MapPin size={20}/></div>
-            <div className="min-w-0"><p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Jurisdiction</p>
-            <p className="text-sm font-bold uppercase truncate group-hover:text-purple-400 transition-colors">{report.jurisdiction || 'Detecting...'}</p></div>
-          </div>
-          <div className="flex items-start gap-4 group cursor-help" title={`PARTY A: ${report.party_a_name}\nPARTY B: ${report.party_b_name}`}>
-            <div className="p-3 bg-green-500/10 rounded-2xl text-green-500 group-hover:scale-110 transition-transform mt-1"><Users size={20}/></div>
-            <div className="flex-1 min-w-0"><p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Parties</p>
-            <p className="text-xs font-bold opacity-70 truncate group-hover:text-green-400 transition-colors">A: {report.party_a_name}</p>
-            <p className="text-xs font-bold opacity-70 truncate group-hover:text-green-400 transition-colors">B: {report.party_b_name}</p></div>
-          </div>
+{/* METADATA GRID: Standardized fonts for Doc Type, Jurisdiction, and Parties */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 bg-white/[0.02] border border-white/5 p-6 md:p-8 rounded-[40px] backdrop-blur-md relative z-[1]">
+      <div className="flex items-center gap-4">
+        <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500"><Briefcase size={20}/></div>
+        <div className="min-w-0">
+          <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Doc Type</p>
+          <p className="text-xs md:text-sm font-bold uppercase leading-tight text-zinc-200">{report.document_type || 'Detecting...'}</p>
         </div>
+      </div>
+      
+      <div className="flex items-center gap-4 border-white/5 md:border-x px-0 md:px-6">
+        <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-500"><MapPin size={20}/></div>
+        <div className="min-w-0">
+          <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Jurisdiction</p>
+          <p className="text-xs md:text-sm font-bold uppercase leading-tight text-zinc-200">{report.jurisdiction || 'Detecting...'}</p>
+        </div>
+      </div>
+      
+      <div className="flex items-start gap-4">
+        <div className="p-3 bg-green-500/10 rounded-2xl text-green-500 mt-1"><Users size={20}/></div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Parties</p>
+          {/* FIXED: Standardized to text-xs md:text-sm and text-zinc-200 to match other two boxes */}
+         {/* FIXED: Added 'uppercase' and 'leading-tight' to match Doc Type and Jurisdiction exactly */}
+<p className="text-xs md:text-sm font-bold uppercase leading-tight text-zinc-200 mb-1">A: {report.party_a_name}</p>
+<p className="text-xs md:text-sm font-bold uppercase leading-tight text-zinc-200">B: {report.party_b_name}</p>
+         </div>
+      </div>
+    </div>
 
 <div className={`p-8 rounded-[40px] mb-12 border transition-all duration-700 ${
   report.risk_score >= 8 ? 'bg-red-500/10 border-red-500/20 shadow-lg animate-pulse' : 
@@ -366,8 +402,9 @@ export default function ReportPage() {
                     <span className="text-[9px] text-zinc-500 uppercase font-black tracking-widest mb-1 group-hover:text-zinc-300 transition-colors">{item.label}</span>
                     <div className="flex items-baseline gap-2">
                       <span className="text-xs font-bold text-blue-400 leading-relaxed whitespace-pre-wrap">{item.value || 'TBD'}</span>
-                      <span className="text-[10px] font-black text-blue-500/40 uppercase tracking-tighter">CDN$</span>
-                    </div>
+<span className="text-[10px] font-black text-blue-500/40 uppercase tracking-tighter">
+  {item.unit || report.currency_code || ""}
+</span>                  </div>
                   </div>
                 ))}
               </div>
@@ -375,36 +412,37 @@ export default function ReportPage() {
         </div>
 
 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10 items-start w-full px-1 md:px-0 overflow-x-hidden">
-  {/* 1. CONFLICTS SECTION: min-w-0 prevents the container from expanding past the viewport */}
+  {/* 1. CONFLICTS SECTION (LEFT) - Hardened for Mobile Viewports */}
   <div className="col-span-12 lg:col-span-7 space-y-4 w-full min-w-0">
     {allFlags.map((flag: any, index: number) => (
       <div 
         key={index} 
         onClick={() => setActiveFlagIndex(index)} 
-        className={`cursor-pointer transition-all border rounded-[24px] md:rounded-[32px] p-5 md:p-8 w-full overflow-hidden ${
-          activeFlagIndex === index ? 'bg-zinc-900 border-blue-500/50 shadow-2xl' : 'bg-zinc-900/20 border-white/5 opacity-50 grayscale hover:grayscale-0'
+        className={`cursor-pointer transition-all border rounded-[28px] md:rounded-[32px] p-5 md:p-8 w-full overflow-hidden ${
+          activeFlagIndex === index 
+            ? 'bg-zinc-900 border-blue-500/50 shadow-2xl' 
+            : 'bg-zinc-900/20 border-white/5 opacity-50 grayscale hover:grayscale-0'
         }`}
       >
-        <div className={`flex flex-wrap items-center gap-2 font-black text-[10px] md:text-[11px] uppercase tracking-widest ${flag.severity === 'high' ? 'text-red-500' : 'text-orange-500'}`}>
-          <ShieldAlert size={16} className="shrink-0" /> 
-          {/* break-all ensures long title strings wrap on narrow screens */}
-          <span className="break-all md:break-words">Conflict #{index + 1}: {flag.issue}</span>
+        <div className={`flex flex-wrap items-center gap-3 font-black text-[10px] md:text-[11px] uppercase tracking-widest ${flag.severity === 'high' ? 'text-red-500' : 'text-orange-500'}`}>
+          <ShieldAlert size={18} className="shrink-0" /> 
+          <span className="break-all md:break-words text-left">Conflict #{index + 1}: {flag.issue}</span>
         </div>
         
         {activeFlagIndex === index && (
-          <div className="mt-6 space-y-4 md:space-y-6 animate-in fade-in duration-500 w-full overflow-hidden">
-            <div className="bg-white/5 p-4 md:p-6 rounded-2xl border border-white/5 italic text-zinc-400 text-xs md:text-sm font-serif leading-relaxed break-words">
+          <div className="mt-6 space-y-6 animate-in fade-in duration-500 w-full overflow-hidden">
+            <div className="bg-white/5 p-5 md:p-6 rounded-2xl border border-white/5 italic text-zinc-400 text-sm font-serif leading-relaxed break-words text-left">
               "{flag.quote}"
             </div>
             
-            <div className="bg-blue-600/5 border border-blue-500/20 p-4 md:p-6 rounded-2xl text-xs md:text-sm italic text-zinc-300 w-full">
+            <div className="bg-blue-600/5 border border-blue-500/20 p-5 md:p-6 rounded-2xl text-sm italic text-zinc-300 w-full">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[9px] md:text-[10px] font-black text-blue-400 uppercase tracking-widest">Negotiation Script</span>
+                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Negotiation Script</span>
                 <button onClick={(e) => { e.stopPropagation(); copyToClipboard(flag.script, index); }}>
                   {copiedIndex === index ? <CheckCircle size={14} className="text-blue-500"/> : <Copy size={14} />}
                 </button>
               </div>
-              <p className="break-words leading-relaxed">{flag.script}</p>
+              <p className="break-words leading-relaxed text-left whitespace-pre-wrap">{flag.script}</p>
             </div>
           </div>
         )}
@@ -412,30 +450,35 @@ export default function ReportPage() {
     ))}
   </div>
 
-  {/* 2. WHITE SECTION: Removed h-[850px] for mobile to prevent vertical cutting */}
+  {/* 2. WHITE SECTION / FORENSIC EVIDENCE (RIGHT) - Restored Icon */}
   <div className="col-span-12 lg:col-span-5 lg:sticky lg:top-8 w-full min-w-0">
-    <div className="bg-white rounded-[28px] md:rounded-[40px] min-h-[400px] lg:h-[850px] flex flex-col border border-white/10 shadow-2xl w-full">
-      <div className="bg-zinc-50 p-4 md:p-6 border-b flex items-center justify-between text-black shrink-0 rounded-t-[28px] md:rounded-t-[40px]">
+    <div className="bg-white rounded-[32px] md:rounded-[40px] min-h-[500px] lg:h-[850px] flex flex-col border border-white/10 shadow-2xl w-full">
+      <div className="bg-zinc-50 p-5 md:p-6 border-b flex items-center justify-between text-black shrink-0 rounded-t-[32px] md:rounded-t-[40px]">
         <div className="flex items-center gap-3 min-w-0">
           <FileText size={20} className="text-blue-600 shrink-0" />
           <span className="text-[10px] font-black uppercase tracking-widest truncate">{report.file_name || 'Document'}</span>
         </div>
+        {/* RESTORED: Space-efficient Icon for Mobile */}
+        {fileUrl && (
+          <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all shrink-0">
+            <ExternalLink size={18} />
+          </a>
+        )}
       </div>
       
-      {/* Reduced padding p-6 for mobile ensures Arabic/Tamil doesn't hit the paper edge */}
-      <div className="p-6 md:p-10 text-zinc-800 font-serif overflow-y-auto flex-1 bg-[#F9FAFB] rounded-b-[28px] md:rounded-b-[40px]">
-        <div className="relative pl-6 md:pl-8 border-l-[3px] border-red-500 mb-8 md:mb-10">
-          <p className="text-[8px] md:text-[9px] font-black text-red-500 uppercase tracking-widest mb-4 font-sans italic leading-none">Forensic Evidence:</p>
-          <p className="text-base md:text-xl text-zinc-950 italic leading-relaxed break-words">
+      <div className="p-6 md:p-10 text-zinc-800 font-serif overflow-y-auto flex-1 bg-[#F9FAFB] rounded-b-[32px] md:rounded-b-[40px]">
+        <div className="relative pl-6 md:pl-8 border-l-[3px] border-red-500 mb-10 text-left">
+          <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-4 font-sans italic leading-none">Forensic Evidence:</p>
+          <p className="text-lg md:text-xl text-zinc-950 italic leading-relaxed break-words">
             "{allFlags[activeFlagIndex]?.quote}"
           </p>
         </div>
         
-        <div className="mt-10 pt-8 border-t border-zinc-100">
+        <div className="mt-10 md:mt-16 pt-10 border-t border-zinc-100 text-left">
           <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-6 font-sans">Sensed Intelligence Gaps:</p>
           <div className="space-y-3 w-full">
             {report.missing_clauses?.map((c: string, i: number) => (
-              <div key={i} className="bg-red-500/5 text-red-700 px-4 py-3 rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest flex items-start gap-3 border border-red-500/10 shadow-sm w-full">
+              <div key={i} className="bg-red-500/5 text-red-700 px-4 md:px-5 py-3 rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest flex items-start gap-3 border border-red-500/10 shadow-sm w-full">
                 <ShieldAlert size={14} className="shrink-0 mt-0.5" /> 
                 <span className="leading-snug break-words">{c}</span>
               </div>
