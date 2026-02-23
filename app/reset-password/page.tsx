@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { createClient } from "@/lib/supabase/client"
 import { Shield, ArrowLeft, Mail, Loader2, Lock, Eye, EyeOff, CheckCircle2, Circle, CheckCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -9,7 +9,9 @@ import { useRouter } from 'next/navigation'
 const supabase = createClient()
 
 export default function ResetPasswordPage() {
+  // ✅ AUTH STATE: Detect if user arrived via Email Recovery Link
   const [isRecoverySession, setIsRecoverySession] = useState(false)
+  
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -19,7 +21,7 @@ export default function ResetPasswordPage() {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error', msg: string } | null>(null)
   const router = useRouter()
 
-  // ✅ HANDSHAKE: Detect if user clicked the email link
+  // ✅ HANDSHAKE: Listen for the recovery event from the URL token
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === "PASSWORD_RECOVERY") {
@@ -29,7 +31,7 @@ export default function ResetPasswordPage() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Strength Logic (Sovereign Standard)
+  // Strength Logic (Sovereign Standards)
   const passwordStrength = useMemo(() => {
     const checks = {
       length: password.length >= 8,
@@ -44,7 +46,7 @@ export default function ResetPasswordPage() {
   const isMatch = password === confirmPassword && password !== '';
   const canSubmitUpdate = passwordStrength.isValid && isMatch;
 
-  // Action A: Request Link (Stage 1)
+  // Handler A: Dispatch Link (If session is NOT recovery)
   const handleRequestLink = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -56,10 +58,10 @@ export default function ResetPasswordPage() {
 
     setLoading(false)
     if (error) setFeedback({ type: 'error', msg: error.message })
-    else setFeedback({ type: 'success', msg: "Recovery protocol initiated. Check your primary inbox." })
+    else setFeedback({ type: 'success', msg: "Recovery protocol initiated. Check your inbox." })
   }
 
-  // Action B: Update Credentials (Stage 2 - Arriving from Email)
+  // Handler B: Update Credentials (If session IS recovery)
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canSubmitUpdate) return
@@ -75,7 +77,7 @@ export default function ResetPasswordPage() {
   if (done) return (
     <div className="min-h-screen bg-[#020202] flex flex-col items-center justify-center p-6 text-center">
       <CheckCircle size={48} className="text-emerald-500 mb-6" />
-      <h1 className="text-3xl font-black uppercase italic text-white">Vault Secured.</h1>
+      <h1 className="text-3xl font-black uppercase italic text-white tracking-tighter">Vault Secured.</h1>
       <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em] mt-3">Access Protocol Re-Established</p>
       <button onClick={() => router.push('/login')} className="mt-10 bg-white text-black font-black px-10 py-4 rounded-xl text-[12px] uppercase tracking-widest hover:bg-zinc-200 transition-all">Enter Vault</button>
     </div>
