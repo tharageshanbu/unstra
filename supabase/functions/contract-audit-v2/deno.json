@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "@std/encoding": "jsr:@std/encoding@^1.0.0",
+    "supabase": "npm:@supabase/supabase-js@2.39.7",
+    "ai": "npm:@google/generative-ai@^0.22.0" 
+  }
+}

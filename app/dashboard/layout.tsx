@@ -38,11 +38,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => { document.body.style.overflow = 'unset'; };
   }, [isSidebarOpen]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
-  };
+const handleLogout = async () => {
+  await supabase.auth.signOut();
+  router.push('/login');
+  // Use window.location for a hard reset to clear all Unstra-specific memory states
+  window.location.href = '/login'; 
+};
 
   return (
     /* h-[100dvh] ensures perfect fit on mobile browsers with shifting bars */
