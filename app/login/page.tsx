@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { login, signup, signInWithGoogle } from './actions'
-import { Shield, ArrowLeft, Lock, Mail, Eye, EyeOff } from 'lucide-react'
+import { Shield, ArrowLeft, Lock, Mail, Eye, EyeOff, CheckCircle2, Circle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage({ 
@@ -14,7 +14,39 @@ export default function LoginPage({
   const params = React.use(searchParams);
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [localError, setLocalError] = useState<string | null>(null);
   const router = useRouter();
+
+  // --- PRODUCTION FIX: SYNC & CLEAR ERRORS ---
+  useEffect(() => {
+    if (params.error) setLocalError(params.error);
+    if (params.message) setLocalError(null);
+  }, [params.error, params.message]);
+
+  const clearUIFeedback = () => {
+    if (localError || params.message) {
+      setLocalError(null);
+      // Clean URL to prevent error/message persistence on refresh
+      router.replace('/login', { scroll: false }); 
+    }
+  };
+
+  // Strength Logic (Locked to Prod Requirements)
+  const passwordStrength = useMemo(() => {
+    const checks = {
+      length: password.length >= 8,
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*]/.test(password),
+      upper: /[A-Z]/.test(password)
+    };
+    const score = Object.values(checks).filter(Boolean).length;
+    return { checks, score, isValid: score === 4 };
+  }, [password]);
+
+  const isMatch = isSignUp ? (password === confirmPassword && password !== '') : true;
+  const canSubmit = isSignUp ? (passwordStrength.isValid && isMatch) : true;
 
   return (
     <div className="relative min-h-screen bg-[#020202] text-white flex items-center justify-center px-6 selection:bg-blue-500/30 overflow-hidden font-sans">
@@ -42,7 +74,7 @@ export default function LoginPage({
         </div>
 
         <form action={signInWithGoogle}>
-          <button className="w-full flex items-center justify-center gap-3 bg-white text-black font-[900] text-[12px] uppercase tracking-widest py-4 rounded-xl hover:bg-zinc-100 transition-all active:scale-[0.98] shadow-2xl">
+          <button type="submit" className="w-full flex items-center justify-center gap-3 bg-white text-black font-[900] text-[12px] uppercase tracking-widest py-4 rounded-xl hover:bg-zinc-100 transition-all active:scale-[0.98] shadow-2xl">
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -65,7 +97,11 @@ export default function LoginPage({
               <Mail size={13} className="text-blue-500" />
               <label className="text-[12px] font-black text-white uppercase tracking-[0.2em] italic">Primary Email</label>
             </div>
-            <input className="w-full rounded-2xl px-5 py-3.5 bg-zinc-900 border border-white/20 focus:border-blue-500 focus:bg-black outline-none transition-all font-bold text-sm placeholder:text-zinc-600" name="email" type="email" placeholder="name@email.com" required />
+            <input 
+              onChange={clearUIFeedback}
+              className="w-full rounded-2xl px-5 py-3.5 bg-zinc-900 border border-white/20 focus:border-blue-500 focus:bg-black outline-none transition-all font-bold text-sm placeholder:text-zinc-600" 
+              name="email" type="email" placeholder="name@email.com" required 
+            />
           </div>
           
           <div className="space-y-2">
@@ -74,47 +110,85 @@ export default function LoginPage({
                 <Lock size={13} className="text-blue-500" />
                 <label className="text-[12px] font-black text-white uppercase tracking-[0.2em] italic">Vault Password</label>
               </div>
-              {/* MINIMALIST FORGOT PASSWORD */}
               {!isSignUp && (
                 <button type="button" onClick={() => router.push('/reset-password')} className="text-[9px] font-black text-zinc-500 hover:text-blue-400 uppercase tracking-widest transition-colors italic">Forgot?</button>
               )}
             </div>
             <div className="relative">
-              <input className="w-full rounded-2xl px-5 py-3.5 bg-zinc-900 border border-white/20 focus:border-blue-500 focus:bg-black outline-none transition-all font-bold text-sm placeholder:text-zinc-600 pr-12" name="password" type={showPassword ? "text" : "password"} placeholder="••••••••" required minLength={6} />
+              <input 
+                className={`w-full rounded-2xl px-5 py-3.5 bg-zinc-900 border ${isSignUp && passwordStrength.score > 0 && !passwordStrength.isValid ? 'border-yellow-500/50' : 'border-white/20'} focus:border-blue-500 focus:bg-black outline-none transition-all font-bold text-sm placeholder:text-zinc-600 pr-12`} 
+                name="password" 
+                type={showPassword ? "text" : "password"} 
+                placeholder="••••••••" 
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); clearUIFeedback(); }}
+                required 
+              />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors">
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
 
-          {/* DYNAMIC CONFIRM PASSWORD FOR SIGNUP */}
           <AnimatePresence>
             {isSignUp && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2 overflow-hidden">
-                <div className="flex items-center gap-2 ml-1">
-                  <Shield size={13} className="text-blue-500" />
-                  <label className="text-[12px] font-black text-white uppercase tracking-[0.2em] italic">Confirm Password</label>
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-4 overflow-hidden">
+                <div className="grid grid-cols-2 gap-2 px-1">
+                  <div className={`flex items-center gap-2 text-[9px] font-bold ${passwordStrength.checks.length ? 'text-blue-400' : 'text-zinc-600'}`}>
+                    {passwordStrength.checks.length ? <CheckCircle2 size={10} /> : <Circle size={10} />} 8+ CHARS
+                  </div>
+                  <div className={`flex items-center gap-2 text-[9px] font-bold ${passwordStrength.checks.upper ? 'text-blue-400' : 'text-zinc-600'}`}>
+                    {passwordStrength.checks.upper ? <CheckCircle2 size={10} /> : <Circle size={10} />} UPPERCASE
+                  </div>
+                  <div className={`flex items-center gap-2 text-[9px] font-bold ${passwordStrength.checks.number ? 'text-blue-400' : 'text-zinc-600'}`}>
+                    {passwordStrength.checks.number ? <CheckCircle2 size={10} /> : <Circle size={10} />} NUMBER
+                  </div>
+                  <div className={`flex items-center gap-2 text-[9px] font-bold ${passwordStrength.checks.special ? 'text-blue-400' : 'text-zinc-600'}`}>
+                    {passwordStrength.checks.special ? <CheckCircle2 size={10} /> : <Circle size={10} />} SYMBOL
+                  </div>
                 </div>
-                <input className="w-full rounded-2xl px-5 py-3.5 bg-zinc-900 border border-white/20 focus:border-blue-500 focus:bg-black outline-none transition-all font-bold text-sm placeholder:text-zinc-600" name="confirmPassword" type="password" placeholder="••••••••" required minLength={6} />
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 ml-1">
+                    <Shield size={13} className="text-blue-500" />
+                    <label className="text-[12px] font-black text-white uppercase tracking-[0.2em] italic">Confirm Password</label>
+                  </div>
+                  <input 
+                    className={`w-full rounded-2xl px-5 py-3.5 bg-zinc-900 border ${confirmPassword !== '' && !isMatch ? 'border-red-500/50' : 'border-white/20'} focus:border-blue-500 focus:bg-black outline-none transition-all font-bold text-sm placeholder:text-zinc-600`} 
+                    name="confirmPassword" 
+                    type="password" 
+                    placeholder="••••••••" 
+                    value={confirmPassword}
+                    onChange={(e) => { setConfirmPassword(e.target.value); clearUIFeedback(); }}
+                    required 
+                  />
+                  {confirmPassword !== '' && !isMatch && (
+                    <p className="text-[9px] font-black text-red-500 uppercase tracking-widest ml-1">Passwords mismatch</p>
+                  )}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-[900] text-[12px] uppercase tracking-[0.4em] py-4.5 rounded-xl transition-all shadow-[0_0_30px_rgba(37,99,235,0.3)] mt-1 active:scale-[0.98]">
+          <button 
+            type="submit" 
+            disabled={isSignUp && !canSubmit}
+            className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-[900] text-[12px] uppercase tracking-[0.4em] py-4.5 rounded-xl transition-all shadow-[0_0_30px_rgba(37,99,235,0.3)] mt-1 active:scale-[0.98]"
+          >
             {isSignUp ? 'INITIALIZE VAULT' : 'ENTER VAULT'}
           </button>
 
           <p className="text-center text-[12px] font-black uppercase tracking-widest text-zinc-400 mt-2">
             {isSignUp ? 'ACCESS ESTABLISHED?' : 'NEW TO UNSTRA?'}
-            <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="ml-3 text-blue-400 hover:text-white transition-colors underline underline-offset-4 decoration-blue-500/50">
+            <button type="button" onClick={() => { setIsSignUp(!isSignUp); setPassword(''); setConfirmPassword(''); clearUIFeedback(); }} className="ml-3 text-blue-400 hover:text-white transition-colors underline underline-offset-4 decoration-blue-500/50">
               {isSignUp ? 'LOG IN' : 'SIGN UP NOW'}
             </button>
           </p>
 
-          {(params.message || params.error) && (
+          {(localError || params.message) && (
             <div className="mt-2">
-              <p className={`p-3 rounded-xl text-[10px] font-black uppercase tracking-widest border italic text-center ${params.error ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
-                {params.message || params.error}
+              <p className={`p-3 rounded-xl text-[10px] font-black uppercase tracking-widest border italic text-center ${localError ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                {localError || params.message}
               </p>
             </div>
           )}
