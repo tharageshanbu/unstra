@@ -36,26 +36,26 @@ export default function LoginPage({
     }
   };
 
-  // ✅ NEW: VAULT RECOVERY HANDSHAKE
-  const handleVaultRecovery = async () => {
-    if (!email) {
-      setLocalError("Master Email Required for Recovery.");
-      return;
-    }
-    
-    setIsResetting(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      // ✅ CRITICAL FIX: This matches your Dashboard Redirect URL
-      redirectTo: 'https://www.unstra.com/reset-password',
-    });
+const handleVaultRecovery = async () => {
+  if (!email) {
+    setLocalError("Master Email Required for Recovery.");
+    return;
+  }
+  
+  setIsResetting(true);
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    // ✅ REDIRECT DIRECTLY TO THE PASSWORD UPDATE FORM
+    redirectTo: 'https://www.unstra.com/reset-password',
+  });
 
-    if (error) {
-      setLocalError(error.message);
-    } else {
-      setLocalError("Access Protocol Sent. Check your Inbox.");
-    }
-    setIsResetting(false);
-  };
+  if (error) {
+    setLocalError(error.message);
+  } else {
+    // This allows the user to stay on the login page while they check their email
+    setLocalError("Access Protocol Sent. Check your Inbox.");
+  }
+  setIsResetting(false);
+};
 
   const passwordStrength = useMemo(() => {
     const checks = {
