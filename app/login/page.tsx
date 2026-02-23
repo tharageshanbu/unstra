@@ -3,8 +3,11 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { login, signup, signInWithGoogle } from './actions'
-import { Shield, ArrowLeft, Lock, Mail, Eye, EyeOff, CheckCircle2, Circle } from 'lucide-react'
+import { createClient } from "@/lib/supabase/client" // ✅ ADDED: Import Supabase
+import { Shield, ArrowLeft, Lock, Mail, Eye, EyeOff, CheckCircle2, Circle, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+
+const supabase = createClient(); // ✅ ADDED: Initialize client
 
 export default function LoginPage({ 
   searchParams 
@@ -16,10 +19,11 @@ export default function LoginPage({
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState(''); // ✅ ADDED: Track email for reset
   const [localError, setLocalError] = useState<string | null>(null);
+  const [isResetting, setIsResetting] = useState(false); // ✅ ADDED: Reset loading state
   const router = useRouter();
 
-  // --- PRODUCTION FIX: SYNC & CLEAR ERRORS ---
   useEffect(() => {
     if (params.error) setLocalError(params.error);
     if (params.message) setLocalError(null);
@@ -28,12 +32,31 @@ export default function LoginPage({
   const clearUIFeedback = () => {
     if (localError || params.message) {
       setLocalError(null);
-      // Clean URL to prevent error/message persistence on refresh
       router.replace('/login', { scroll: false }); 
     }
   };
 
-  // Strength Logic (Locked to Prod Requirements)
+  // ✅ NEW: VAULT RECOVERY HANDSHAKE
+  const handleVaultRecovery = async () => {
+    if (!email) {
+      setLocalError("Master Email Required for Recovery.");
+      return;
+    }
+    
+    setIsResetting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      // ✅ CRITICAL FIX: This matches your Dashboard Redirect URL
+      redirectTo: 'https://www.unstra.com/reset-password',
+    });
+
+    if (error) {
+      setLocalError(error.message);
+    } else {
+      setLocalError("Access Protocol Sent. Check your Inbox.");
+    }
+    setIsResetting(false);
+  };
+
   const passwordStrength = useMemo(() => {
     const checks = {
       length: password.length >= 8,
@@ -98,7 +121,7 @@ export default function LoginPage({
               <label className="text-[12px] font-black text-white uppercase tracking-[0.2em] italic">Primary Email</label>
             </div>
             <input 
-              onChange={clearUIFeedback}
+              onChange={(e) => { setEmail(e.target.value); clearUIFeedback(); }} // ✅ Track Email
               className="w-full rounded-2xl px-5 py-3.5 bg-zinc-900 border border-white/20 focus:border-blue-500 focus:bg-black outline-none transition-all font-bold text-sm placeholder:text-zinc-600" 
               name="email" type="email" placeholder="name@email.com" required 
             />
@@ -111,7 +134,14 @@ export default function LoginPage({
                 <label className="text-[12px] font-black text-white uppercase tracking-[0.2em] italic">Vault Password</label>
               </div>
               {!isSignUp && (
-                <button type="button" onClick={() => router.push('/reset-password')} className="text-[9px] font-black text-zinc-500 hover:text-blue-400 uppercase tracking-widest transition-colors italic">Forgot?</button>
+                <button 
+                  type="button" 
+                  onClick={handleVaultRecovery} // ✅ FIXED Logic
+                  className="text-[9px] font-black text-zinc-500 hover:text-blue-400 uppercase tracking-widest transition-colors italic disabled:opacity-50"
+                  disabled={isResetting}
+                >
+                  {isResetting ? <Loader2 size={10} className="animate-spin" /> : 'Forgot?'}
+                </button>
               )}
             </div>
             <div className="relative">
@@ -131,6 +161,7 @@ export default function LoginPage({
           </div>
 
           <AnimatePresence>
+            {/* Password Strength UI Code Preserved */}
             {isSignUp && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-4 overflow-hidden">
                 <div className="grid grid-cols-2 gap-2 px-1">
@@ -187,7 +218,7 @@ export default function LoginPage({
 
           {(localError || params.message) && (
             <div className="mt-2">
-              <p className={`p-3 rounded-xl text-[10px] font-black uppercase tracking-widest border italic text-center ${localError ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+              <p className={`p-3 rounded-xl text-[10px] font-black uppercase tracking-widest border italic text-center ${localError?.includes('Inbox') ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : localError ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
                 {localError || params.message}
               </p>
             </div>
