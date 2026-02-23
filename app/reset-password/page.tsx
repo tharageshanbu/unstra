@@ -18,10 +18,9 @@ export default function ResetPasswordPage() {
     setLoading(true)
     setFeedback(null)
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      // Must match your Supabase Redirect Whitelist
-      redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/settings/password`,
-    })
+const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  redirectTo: 'https://www.unstra.com/reset-password',
+})
 
     setLoading(false)
     if (error) {
